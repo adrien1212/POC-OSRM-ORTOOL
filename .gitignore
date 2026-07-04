@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+cartoenv/
+
+# Jupyter
+.ipynb_checkpoints/
+.jupyter/
+
+# OSRM generated artifacts
+*.osrm*
+*.osm.pbf
+
+# Generated output
+vrp_routes.html
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
