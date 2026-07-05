@@ -161,11 +161,13 @@ public class RouteOptimizationService {
         logger.info("Objective: " + solution.objectiveValue());
 
         long totalDistance = 0;
+        RoutingDimension durationDimension = routing.getDimensionOrDie("Duration");
         List<VehicleRoute> vehicleRoutes = new ArrayList<>();
 
         for (int vehicleId = 0; vehicleId < vehicleCount; vehicleId++) {
             long index = routing.start(vehicleId);
             long routeDistance = 0;
+            long routeDuration = 0;
             StringBuilder route = new StringBuilder();
             List<RouteStop> vehicleStops = new ArrayList<>();
 
@@ -184,6 +186,8 @@ public class RouteOptimizationService {
                         index,
                         vehicleId
                 );
+
+                routeDuration = solution.value(durationDimension.cumulVar(index));
             }
 
             int endNodeIndex = manager.indexToNode(index);
@@ -192,9 +196,10 @@ public class RouteOptimizationService {
 
             logger.info(route.toString());
             logger.info("Route distance: " + routeDistance);
+            logger.info("Route duration: " + routeDuration);
 
             totalDistance += routeDistance;
-            vehicleRoutes.add(new VehicleRoute(vehicleId, vehicleStops, totalDistance, 0));
+            vehicleRoutes.add(new VehicleRoute(vehicleId, vehicleStops, routeDistance, routeDuration));
         }
 
         logger.info("Total distance: " + totalDistance);
