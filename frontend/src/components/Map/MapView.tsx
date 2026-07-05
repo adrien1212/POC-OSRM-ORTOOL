@@ -22,8 +22,7 @@ import { formatCoords } from "@/utils/format";
 import { Crosshair, Maximize } from "lucide-react";
 
 const PARIS: [number, number] = [48.8566, 2.3522];
-const OSRM_BASE_URL =
-  import.meta.env.VITE_OSRM_BASE_URL ?? "http://localhost:5001";
+const OSRM_BASE_URL = import.meta.env.VITE_OSRM_BASE_URL ?? "/osrm";
 
 type LatLngTuple = [number, number];
 

@@ -8,7 +8,7 @@ type BackendCoordonnees = {
 };
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8012",
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api",
   headers: { "Content-Type": "application/json" },
 });
 
