@@ -26,3 +26,7 @@ vrp_routes.html
 Thumbs.db
 .idea/
 .vscode/
+
+
+frontend/node_modules/
+frontend/.output
