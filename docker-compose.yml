@@ -1,0 +1,58 @@
+services:
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend
+    command:
+      - sh
+      - -lc
+      - |
+        set -e
+        cp /input/midi-pyrenees-260703.osm.pbf /data/midi-pyrenees-260703.osm.pbf
+        if [ ! -f /data/midi-pyrenees-260703.osrm ]; then
+          osrm-extract -p /opt/car.lua /data/midi-pyrenees-260703.osm.pbf
+          osrm-partition /data/midi-pyrenees-260703.osrm
+          osrm-customize /data/midi-pyrenees-260703.osrm
+        fi
+        exec osrm-routed --algorithm mld /data/midi-pyrenees-260703.osrm
+    ports:
+      - "5001:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /data/midi-pyrenees-260703.osrm"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - ./:/input:ro
+      - osrm_data:/data
+
+  backend:
+    image: eclipse-temurin:25-jdk
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      OSRM_BASE_URL: http://osrm:5000
+    ports:
+      - "8012:8012"
+    volumes:
+      - ./:/workspace
+      - backend_m2:/root/.m2
+    depends_on:
+      osrm:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    working_dir: /workspace/frontend
+    environment:
+      BACKEND_BASE_URL: http://backend:8012
+      OSRM_BASE_URL: http://osrm:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  backend_m2:
+  osrm_data:

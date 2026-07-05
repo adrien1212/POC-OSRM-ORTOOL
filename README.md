@@ -27,7 +27,7 @@ Le flux est le suivant :
 - un jeu de données routières OSM pour la zone étudiée
 - les bibliothèques Python `requests`, `ortools` et `folium`
 
-## Installation d’OSRM
+## Installation d'OSRM
 
 La documentation officielle est ici :
 
@@ -60,6 +60,24 @@ docker run -t -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-customize
 ```bash
 docker run -t -i -p 5001:5000 -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/midi-pyrenees-260703.osrm
 ```
+
+### Avec Docker Compose
+
+Le dépôt contient aussi un [`docker-compose.yml`](./docker-compose.yml) qui démarre :
+
+- `osrm` sur `http://localhost:5001`
+- `backend` sur `http://localhost:8012`
+- `frontend` sur `http://localhost:3000`
+
+Lancez-le depuis la racine du projet :
+
+```bash
+docker compose up
+```
+
+Le service OSRM construit ses fichiers de routage dans un volume Docker persistant à partir du fichier
+[`midi-pyrenees-260703.osm.pbf`](./midi-pyrenees-260703.osm.pbf) présent à la racine du dépôt. Le premier démarrage
+peut donc prendre du temps.
 
 ## Installation Python
 

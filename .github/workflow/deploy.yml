@@ -1,0 +1,116 @@
+name: Deploy to vps
+
+on:
+  push:
+    # branches: [ "main" ]
+    tags: [ "*" ]          # if you ever tag releases
+  workflow_dispatch:   # optional: manual trigger
+
+env:
+  REGISTRY: ghcr.io
+  APP_DIR: /home/debian/carto
+  VPS_HOST: 57.128.201.144         
+  VPS_USER: debian                   
+  TAG: ${{ github.ref_name }}        # e.g., v1.2.3
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Build & push ${{ matrix.name }}
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: frontend
+            context: frontend
+            image: frontend
+          - name: backend
+            context: backend
+            image: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/carto/${{ matrix.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+          flavor: latest=false # don’t auto-tag as latest
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          build-args: |
+            APP_VERSION=${{ env.TAG }}
+
+
+  deploy:
+    name: Deploy to VPS (compose up -d, no .env changes)
+    runs-on: ubuntu-latest
+    needs: publish
+ 
+    steps:
+    - uses: actions/checkout@v4
+    - name: Copy files via SSH
+      uses: appleboy/scp-action@v1
+      with:
+        host: 57.128.201.144
+        username: debian
+        key: ${{ secrets.DEPLOY_KEY_VPS }}
+        port: 22
+        source: "docker-compose.yml"
+        target: "/home/debian/carto"
+
+    - name: Deploy using ssh
+      uses: appleboy/ssh-action@master
+      with:
+        envs: TAG,GHCR_USER,GITHUB_TOKEN,APP_DIR 
+        host: 57.128.201.144
+        username: debian
+        key: ${{ secrets.DEPLOY_KEY_VPS }}
+        port: 22
+        script: |
+          cd /home/debian/carto
+
+          # Login to GHCR if pulling private images
+          printf "%s" "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
+
+          # IMPORTANT: Export TAG only for this command; shell var overrides .env
+          echo TAG VALUE : ${TAG}
+          TAG="${TAG}" docker compose pull
+          TAG="${TAG}" docker compose up -d --remove-orphans
+
+          docker image prune -f
