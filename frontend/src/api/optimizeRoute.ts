@@ -13,7 +13,7 @@ export async function optimizeRoute(
   req: BackendOptimizeRouteRequest,
 ): Promise<BackendOptimizeRouteResponse> {
   const { data } = await client.post<BackendOptimizeRouteResponse>(
-    "/api/v1/routes/optimize",
+    "/v1/routes/optimize",
     req,
   );
   return data;

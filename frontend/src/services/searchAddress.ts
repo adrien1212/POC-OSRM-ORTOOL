@@ -16,7 +16,7 @@ export async function searchAddress(query: string): Promise<AddressResult[]> {
   const adresse = query.trim();
   if (!adresse) return [];
 
-  const { data } = await client.get<BackendCoordonnees>("/api/v1/coordonnees", {
+  const { data } = await client.get<BackendCoordonnees>("/v1/coordonnees", {
     params: { adresse },
   });
 
