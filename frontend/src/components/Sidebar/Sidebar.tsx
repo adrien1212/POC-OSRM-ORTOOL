@@ -15,6 +15,7 @@ import { DepotSelector } from "./DepotSelector";
 import { CapacityConfig } from "./CapacityConfig";
 import { VehiclesConfig } from "./VehiclesConfig";
 import { AlertCircle, Loader2, RotateCcw, Sparkles } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface Props {
   result: OptimizeResponse | null;
@@ -26,8 +27,8 @@ function validate(
   startId: string | null,
   endId: string | null,
   vehicles: number,
-  vehicleCapacity: number,
   vehicleCapacities: number[],
+  capacityEnabled: boolean,
   totalDemand: number,
   maxStopDemand: number,
 ): string[] {
@@ -37,21 +38,21 @@ function validate(
   if (!endId) errors.push("Select an end depot.");
   if (!Number.isInteger(vehicles) || vehicles < 1)
     errors.push("Vehicle count must be at least 1.");
-  if (!Number.isInteger(vehicleCapacity) || vehicleCapacity < 1)
-    errors.push("Vehicle capacity must be at least 1.");
-  if (vehicleCapacities.length !== vehicles) {
-    errors.push("Each vehicle must have a capacity value.");
-  }
-  if (vehicleCapacities.some((cap) => !Number.isInteger(cap) || cap < 1)) {
-    errors.push("Each vehicle capacity must be at least 1.");
-  }
-  const totalCapacity = vehicleCapacities.reduce((sum, cap) => sum + cap, 0);
-  if (totalDemand > totalCapacity) {
-    errors.push("Total demand exceeds the fleet capacity.");
-  }
-  const maxSingleVehicleCapacity = Math.max(...vehicleCapacities, 0);
-  if (maxStopDemand > maxSingleVehicleCapacity) {
-    errors.push("One stop exceeds the capacity of every vehicle.");
+  if (capacityEnabled) {
+    if (vehicleCapacities.length !== vehicles) {
+      errors.push("Each vehicle must have a capacity value.");
+    }
+    if (vehicleCapacities.some((cap) => !Number.isInteger(cap) || cap < 1)) {
+      errors.push("Each vehicle capacity must be at least 1.");
+    }
+    const totalCapacity = vehicleCapacities.reduce((sum, cap) => sum + cap, 0);
+    if (totalDemand > totalCapacity) {
+      errors.push("Total demand exceeds the fleet capacity.");
+    }
+    const maxSingleVehicleCapacity = Math.max(...vehicleCapacities, 0);
+    if (maxStopDemand > maxSingleVehicleCapacity) {
+      errors.push("One stop exceeds the capacity of every vehicle.");
+    }
   }
   return errors;
 }
@@ -83,8 +84,8 @@ export function Sidebar({ result, onResult }: Props) {
     [planner.vehicleCapacities],
   );
   const maxVehicleCapacity = useMemo(
-    () => Math.max(...planner.vehicleCapacities, planner.vehicleCapacity),
-    [planner.vehicleCapacities, planner.vehicleCapacity],
+    () => Math.max(...planner.vehicleCapacities, 0),
+    [planner.vehicleCapacities],
   );
   const startDepotLabel = displayDepotLabel(
     planner.points,
@@ -99,8 +100,8 @@ export function Sidebar({ result, onResult }: Props) {
         planner.startPointId,
         planner.endPointId,
         planner.vehicles,
-        planner.vehicleCapacity,
         planner.vehicleCapacities,
+        planner.capacityEnabled,
         totalDemand,
         maxStopDemand,
       ),
@@ -109,8 +110,8 @@ export function Sidebar({ result, onResult }: Props) {
       planner.startPointId,
       planner.endPointId,
       planner.vehicles,
-      planner.vehicleCapacity,
       planner.vehicleCapacities,
+      planner.capacityEnabled,
       totalDemand,
       maxStopDemand,
     ],
@@ -132,13 +133,13 @@ export function Sidebar({ result, onResult }: Props) {
         .filter(
           (p) => p.id !== planner.startPointId && p.id !== planner.endPointId,
         )
-        .map((p) => ({
-          address: p.address,
-          demand: p.load,
-        })),
+        .map((p) =>
+          planner.capacityEnabled
+            ? { address: p.address, demand: p.load }
+            : { address: p.address },
+        ),
       vehicleCount: planner.vehicles,
-      vehicleCapacity: planner.vehicleCapacity,
-      vehicleCapacities: planner.vehicleCapacities,
+      vehicleCapacities: planner.capacityEnabled ? planner.vehicleCapacities : undefined,
     };
     try {
       const res = await optimize.mutateAsync(req);
@@ -168,6 +169,7 @@ export function Sidebar({ result, onResult }: Props) {
             startPointId={planner.startPointId}
             endPointId={planner.endPointId}
             maxVehicleCapacity={maxVehicleCapacity}
+            showDemand={planner.capacityEnabled}
             onUpdate={planner.updatePoint}
             onDelete={planner.deletePoint}
           />
@@ -188,15 +190,27 @@ export function Sidebar({ result, onResult }: Props) {
             vehicles={planner.vehicles}
             onChange={planner.setVehicles}
           />
-          <div className="pt-3">
-            <CapacityConfig
-              vehicleCapacity={planner.vehicleCapacity}
-              vehicles={planner.vehicles}
-              vehicleCapacities={planner.vehicleCapacities}
-              onDefaultChange={planner.setVehicleCapacity}
-              onVehicleCapacityChange={planner.setVehicleCapacityAt}
+          <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
+            <div>
+              <p className="text-sm font-medium text-foreground">Capacity constraints</p>
+              <p className="text-xs text-muted-foreground">
+                Enable demand and vehicle capacity checks.
+              </p>
+            </div>
+            <Switch
+              checked={planner.capacityEnabled}
+              onCheckedChange={planner.setCapacityEnabled}
             />
           </div>
+          {planner.capacityEnabled && (
+            <div className="pt-3">
+              <CapacityConfig
+                vehicles={planner.vehicles}
+                vehicleCapacities={planner.vehicleCapacities}
+                onVehicleCapacityChange={planner.setVehicleCapacityAt}
+              />
+            </div>
+          )}
         </Section>
 
         <Section title="Summary">
@@ -206,15 +220,17 @@ export function Sidebar({ result, onResult }: Props) {
               value={String(planner.points.length)}
             />
             <SummaryRow label="Vehicles" value={String(planner.vehicles)} />
-            <SummaryRow
-              label="Per-vehicle cap."
-              value={String(planner.vehicleCapacity)}
-            />
-            <SummaryRow
-              label="Total demand"
-              value={String(totalDemand)}
-            />
-            <SummaryRow label="Fleet cap." value={String(totalCapacity)} />
+            {planner.capacityEnabled ? (
+              <>
+                <SummaryRow
+                  label="Total demand"
+                  value={String(totalDemand)}
+                />
+                <SummaryRow label="Fleet cap." value={String(totalCapacity)} />
+              </>
+            ) : (
+              <SummaryRow label="Capacity mode" value="Off" />
+            )}
             <SummaryRow label="Start depot" value={startDepotLabel} />
             <SummaryRow label="End depot" value={endDepotLabel} />
           </dl>
@@ -271,8 +287,8 @@ export function Sidebar({ result, onResult }: Props) {
             <RouteSummary
               result={result}
               points={planner.points}
-              vehicleCapacity={planner.vehicleCapacity}
               vehicleCapacities={planner.vehicleCapacities}
+              showCapacity={planner.capacityEnabled}
               selectedRouteId={planner.selectedRouteId}
               onSelectRoute={planner.setSelectedRouteId}
             />

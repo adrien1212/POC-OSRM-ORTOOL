@@ -8,6 +8,7 @@ interface Props {
   startPointId: string | null;
   endPointId: string | null;
   maxVehicleCapacity: number;
+  showDemand: boolean;
   onUpdate: (id: string, patch: Partial<Omit<DeliveryPoint, "id">>) => void;
   onDelete: (id: string) => void;
 }
@@ -25,6 +26,7 @@ export function DeliveryList({
   startPointId,
   endPointId,
   maxVehicleCapacity,
+  showDemand,
   onUpdate,
   onDelete,
 }: Props) {
@@ -75,7 +77,8 @@ export function DeliveryList({
       {points.map((p, idx) => {
         const b = badge(p, startPointId, endPointId);
         const editing = editingId === p.id;
-        const oversizedDemand = p.load > maxVehicleCapacity;
+        const oversizedDemand = showDemand && p.load > maxVehicleCapacity;
+        const isDepot = p.id === startPointId || p.id === endPointId;
         return (
           <li
             key={p.id}
@@ -102,17 +105,21 @@ export function DeliveryList({
                     className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="number"
-                    min={0}
-                    value={draft.load}
-                    onChange={(e) => setDraft((d) => ({ ...d, load: e.target.value }))}
-                    placeholder="Demand"
-                    className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
-                  />
-                </div>
+                {showDemand && (
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="number"
+                      min={0}
+                      value={draft.load}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, load: e.target.value }))
+                      }
+                      placeholder="Demand"
+                      className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    />
+                  </div>
+                )}
                 <div className="flex justify-end gap-1">
                   <button
                     onClick={() => save(p.id)}
@@ -152,21 +159,23 @@ export function DeliveryList({
                   <p className="text-xs text-muted-foreground">
                     {formatCoords(p.latitude, p.longitude)}
                   </p>
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Package className="h-3.5 w-3.5 shrink-0" />
-                    <span className="w-12 shrink-0">Demand</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={p.load}
-                      onChange={(e) =>
-                        onUpdate(p.id, {
-                          load: Math.max(0, Math.floor(Number(e.target.value) || 0)),
-                        })
-                      }
-                      className="w-20 rounded-md border border-input bg-background px-2 py-1 text-xs outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
-                    />
-                  </label>
+                  {showDemand && !isDepot ? (
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Package className="h-3.5 w-3.5 shrink-0" />
+                      <span className="w-12 shrink-0">Demand</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={p.load}
+                        onChange={(e) =>
+                          onUpdate(p.id, {
+                            load: Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                          })
+                        }
+                        className="w-20 rounded-md border border-input bg-background px-2 py-1 text-xs outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
+                      />
+                    </label>
+                  ) : null}
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button

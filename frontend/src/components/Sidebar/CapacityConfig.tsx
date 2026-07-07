@@ -1,18 +1,14 @@
 import { Package } from "lucide-react";
 
 interface Props {
-  vehicleCapacity: number;
   vehicles: number;
   vehicleCapacities: number[];
-  onDefaultChange: (n: number) => void;
   onVehicleCapacityChange: (index: number, n: number) => void;
 }
 
 export function CapacityConfig({
-  vehicleCapacity,
   vehicles,
   vehicleCapacities,
-  onDefaultChange,
   onVehicleCapacityChange,
 }: Props) {
   const totalCapacity = vehicleCapacities.reduce((sum, value) => sum + value, 0);
@@ -30,27 +26,12 @@ export function CapacityConfig({
       </div>
 
       <div className="space-y-2">
-        <label className="block">
-          <span className="mb-1 block text-xs font-medium text-muted-foreground">
-            Default capacity
-          </span>
-          <input
-            type="number"
-            min={1}
-            value={vehicleCapacity}
-            onChange={(e) => onDefaultChange(Number(e.target.value))}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
-          />
-        </label>
-      </div>
-
-      <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground">
           Per-vehicle overrides
         </p>
         <div className="grid gap-2">
           {Array.from({ length: vehicles }, (_, index) => {
-            const value = vehicleCapacities[index] ?? vehicleCapacity;
+            const value = vehicleCapacities[index] ?? 20;
             return (
               <label
                 key={index}
@@ -76,7 +57,7 @@ export function CapacityConfig({
 
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>
-          Default is applied to new vehicles.
+          New vehicles inherit the previous capacity value.
         </span>
         <span className="hidden sm:inline">•</span>
         <span>Overrides are sent to the backend per vehicle.</span>

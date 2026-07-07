@@ -10,6 +10,12 @@ import fr.adriencaubel.vrp.controller.output.RouteStop;
 import fr.adriencaubel.vrp.controller.output.VehicleRoute;
 import fr.adriencaubel.vrp.service.adressapi.FeatureCollectionDto;
 import fr.adriencaubel.vrp.service.osrmapi.OSRMDTO;
+import fr.adriencaubel.vrp.service.optimization.CapacityDimensionDecorator;
+import fr.adriencaubel.vrp.service.optimization.DistanceDimensionDecorator;
+import fr.adriencaubel.vrp.service.optimization.DurationDimensionDecorator;
+import fr.adriencaubel.vrp.service.optimization.ForceVehicleUsageDecorator;
+import fr.adriencaubel.vrp.service.optimization.RouteOptimizationContext;
+import fr.adriencaubel.vrp.service.optimization.RoutingModelDecorator;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,19 +45,12 @@ public class RouteOptimizationService {
             throw new IllegalArgumentException("Vehicle count must be greater than zero");
         }
 
-        if (request.stops().stream().anyMatch(stop -> stop.demand() < 0)) {
+        if (request.stops().stream().anyMatch(stop -> stop.demand() != null && stop.demand() < 0)) {
             throw new IllegalArgumentException("Demand must be greater than or equal to zero");
         }
 
-        if(request.vehicleCount() != request.vehicleCapacities().size()) {
-            throw new IllegalArgumentException("You must specify capacity for each vehicule");
-        }
-
         long[] vehicleCapacities = resolveVehicleCapacities(request);
-        if (vehicleCapacities.length != request.vehicleCount()) {
-            throw new IllegalArgumentException("Vehicle capacities must match vehicle count");
-        }
-        if (Arrays.stream(vehicleCapacities).anyMatch(capacity -> capacity <= 0)) {
+        if (vehicleCapacities != null && Arrays.stream(vehicleCapacities).anyMatch(capacity -> capacity <= 0)) {
             throw new IllegalArgumentException("Each vehicle capacity must be greater than zero");
         }
 
@@ -76,7 +75,7 @@ public class RouteOptimizationService {
                     stopCoordonnees.latitude(),
                     stopCoordonnees.longitude()
             ));
-            demands.add((long) stopRequest.demand());
+            demands.add(stopRequest.demand() == null ? 0L : stopRequest.demand().longValue());
         }
 
         OSRMDTO osrmdto = distanceMatrix(coordonees);
@@ -135,46 +134,29 @@ public class RouteOptimizationService {
 
         routing.setArcCostEvaluatorOfAllVehicles(transitCallbackIndex);
 
-        routing.addDimension(
+        RouteOptimizationContext context = new RouteOptimizationContext(
+                manager,
+                routing,
                 transitCallbackIndex,
-                0,
-                2000000,  // max distance per vehicle in meters
-                true,
-                "Distance"
-                );
-
-        RoutingDimension distanceDimension = routing.getDimensionOrDie("Distance");
-        distanceDimension.setGlobalSpanCostCoefficient(100);
-
-        routing.addDimensionWithVehicleCapacity(
+                durationCallbackIndex,
                 demandCallbackIndex,
-                0,
-                vehicleCapacities,
-                true,
-                "Capacity"
+                distanceMatrix,
+                durationMatrix,
+                demands,
+                stops,
+                vehicleCount,
+                vehicleCapacities
         );
 
-        routing.addDimension(
-                durationCallbackIndex,
-                0,
-                5 * 3600,  // max 8 hours per vehicle
-                true,
-                "Duration"
-                );
+        List<RoutingModelDecorator> decorators = List.of(
+                new DistanceDimensionDecorator(2_000_000L, 100),
+                new DurationDimensionDecorator(5 * 3600L),
+                new CapacityDimensionDecorator(),
+                new ForceVehicleUsageDecorator()
+        );
 
-        RoutingDimension durationDimension = routing.getDimensionOrDie("Duration");
-
-        // force all vegicule
-        for (int vehicleId = 0; vehicleId < vehicleCount; vehicleId++) {
-            long start = routing.start(vehicleId);
-            long end = routing.end(vehicleId);
-
-            routing.solver().addConstraint(
-                    routing.solver().makeNonEquality(
-                            routing.nextVar(start),
-                            end
-                    )
-            );
+        for (RoutingModelDecorator decorator : decorators) {
+            decorator.decorate(context);
         }
 
         RoutingSearchParameters searchParameters =
@@ -191,15 +173,21 @@ public class RouteOptimizationService {
             throw new IllegalArgumentException("no solution found");
         }
 
-        return printSolution(routing, manager, solution, vehicleCount, stops);
+        return printSolution(routing, manager, solution, vehicleCount, stops, vehicleCapacities != null);
     }
 
     private long[] resolveVehicleCapacities(OptimizeRouteRequest request) {
-        long[] resolved = new long[request.vehicleCount()];
         List<Integer> capacities = request.vehicleCapacities();
+        if (capacities == null || capacities.isEmpty()) {
+            return null;
+        }
+        if (capacities.size() != request.vehicleCount()) {
+            throw new IllegalArgumentException("You must specify capacity for each vehicle");
+        }
+
+        long[] resolved = new long[request.vehicleCount()];
         for (int i = 0; i < resolved.length; i++) {
-            int capacity = capacities.get(i);
-            resolved[i] = capacity;
+            resolved[i] = capacities.get(i);
         }
         return resolved;
     }
@@ -209,13 +197,16 @@ public class RouteOptimizationService {
             RoutingIndexManager manager,
             Assignment solution,
             int vehicleCount,
-            List<RouteStop> stops
+            List<RouteStop> stops,
+            boolean hasCapacityDimension
     ) {
         logger.info("Objective: " + solution.objectiveValue());
 
         long totalDistance = 0;
         RoutingDimension durationDimension = routing.getDimensionOrDie("Duration");
-        RoutingDimension capacityDimension = routing.getDimensionOrDie("Capacity");
+        RoutingDimension capacityDimension = hasCapacityDimension
+                ? routing.getDimensionOrDie("Capacity")
+                : null;
         List<VehicleRoute> vehicleRoutes = new ArrayList<>();
 
         for (int vehicleId = 0; vehicleId < vehicleCount; vehicleId++) {
@@ -248,7 +239,7 @@ public class RouteOptimizationService {
             int endNodeIndex = manager.indexToNode(index);
             route.append(endNodeIndex);
             vehicleStops.add(stops.get(endNodeIndex));
-            routeLoad = solution.value(capacityDimension.cumulVar(index));
+            routeLoad = capacityDimension == null ? 0 : solution.value(capacityDimension.cumulVar(index));
 
             logger.info(route.toString());
             logger.info("Route distance: " + routeDistance);

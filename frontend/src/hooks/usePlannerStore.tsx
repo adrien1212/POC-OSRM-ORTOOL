@@ -16,8 +16,8 @@ interface PlannerState {
   startPointId: string | null;
   endPointId: string | null;
   vehicles: number;
-  vehicleCapacity: number;
   vehicleCapacities: number[];
+  capacityEnabled: boolean;
   options: OptimizeOptions;
   selectedRouteId: string | null;
 
@@ -27,8 +27,8 @@ interface PlannerState {
   setStartPointId: (id: string | null) => void;
   setEndPointId: (id: string | null) => void;
   setVehicles: (n: number) => void;
-  setVehicleCapacity: (n: number) => void;
   setVehicleCapacityAt: (index: number, capacity: number) => void;
+  setCapacityEnabled: (enabled: boolean) => void;
   setOptions: (patch: Partial<OptimizeOptions>) => void;
   setSelectedRouteId: (id: string | null) => void;
 }
@@ -40,8 +40,8 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   const [startPointId, setStartPointId] = useState<string | null>(null);
   const [endPointId, setEndPointId] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState(1);
-  const [vehicleCapacity, setVehicleCapacity] = useState(20);
   const [vehicleCapacities, setVehicleCapacities] = useState<number[]>([20]);
+  const [capacityEnabled, setCapacityEnabled] = useState(false);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [options, setOptionsState] = useState<OptimizeOptions>({
     distanceMode: "real_road",
@@ -56,8 +56,8 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       startPointId,
       endPointId,
       vehicles,
-      vehicleCapacity,
       vehicleCapacities,
+      capacityEnabled,
       options,
       selectedRouteId,
       addPoint: (addr) => {
@@ -96,7 +96,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
             const next = [...prevCapacities];
             if (nextVehicles > next.length) {
               for (let i = next.length; i < nextVehicles; i += 1) {
-                next.push(vehicleCapacity);
+                next.push(next[next.length - 1] ?? 20);
               }
             } else if (nextVehicles < next.length) {
               next.length = nextVehicles;
@@ -105,19 +105,13 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
           });
           return nextVehicles;
         }),
-      setVehicleCapacity: (n) => {
-        const nextCapacity = Math.max(1, Math.floor(n || 1));
-        setVehicleCapacity(nextCapacity);
-        setVehicleCapacities((prev) =>
-          prev.map((cap) => (cap === vehicleCapacity ? nextCapacity : cap)),
-        );
-      },
       setVehicleCapacityAt: (index, capacity) =>
         setVehicleCapacities((prev) =>
           prev.map((cap, i) =>
             i === index ? Math.max(1, Math.floor(capacity || 1)) : cap,
           ),
         ),
+      setCapacityEnabled,
       setOptions: (patch) => setOptionsState((prev) => ({ ...prev, ...patch })),
       setSelectedRouteId,
     };
@@ -126,8 +120,8 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
     startPointId,
     endPointId,
     vehicles,
-    vehicleCapacity,
     vehicleCapacities,
+    capacityEnabled,
     options,
     selectedRouteId,
   ]);

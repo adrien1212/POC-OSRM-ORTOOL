@@ -74,8 +74,7 @@ export interface BackendOptimizeRouteRequest {
   depot: string;
   stops: BackendOptimizeRouteStopRequest[];
   vehicleCount: number;
-  vehicleCapacity: number;
-  vehicleCapacities: number[];
+  vehicleCapacities?: number[];
 }
 
 export interface BackendRouteStop {
@@ -86,7 +85,7 @@ export interface BackendRouteStop {
 
 export interface BackendOptimizeRouteStopRequest {
   address: string;
-  demand: number;
+  demand?: number;
 }
 
 export interface BackendVehicleRoute {
