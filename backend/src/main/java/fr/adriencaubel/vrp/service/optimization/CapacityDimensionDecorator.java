@@ -12,7 +12,7 @@ public class CapacityDimensionDecorator implements RoutingModelDecorator {
                 context.demandCallbackIndex(),
                 0,
                 context.vehicleCapacities(),
-                true,
+                false,
                 "Capacity"
         );
     }

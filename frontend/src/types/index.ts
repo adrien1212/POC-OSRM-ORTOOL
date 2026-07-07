@@ -3,7 +3,8 @@ export interface DeliveryPoint {
   address: string;
   latitude: number;
   longitude: number;
-  load: number;
+  quantity: number;
+  stopType: StopType;
 }
 
 export interface AddressResult {
@@ -16,6 +17,7 @@ export interface AddressResult {
 export type DistanceMode = "real_road" | "straight_line";
 export type VehicleProfile = "car" | "truck" | "bike";
 export type Objective = "minimize_duration" | "minimize_distance";
+export type StopType = "delivery" | "pickup";
 
 export interface OptimizeOptions {
   distanceMode: DistanceMode;
@@ -29,7 +31,8 @@ export interface OptimizeRequestPoint {
   address: string;
   lat: number;
   lng: number;
-  load: number;
+  quantity: number;
+  stopType: StopType;
 }
 
 export interface OptimizeRequest {
@@ -85,7 +88,8 @@ export interface BackendRouteStop {
 
 export interface BackendOptimizeRouteStopRequest {
   address: string;
-  demand?: number;
+  quantity?: number;
+  stopType?: StopType;
 }
 
 export interface BackendVehicleRoute {

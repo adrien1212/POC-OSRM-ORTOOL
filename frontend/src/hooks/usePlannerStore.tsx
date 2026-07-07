@@ -62,13 +62,14 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       selectedRouteId,
       addPoint: (addr) => {
         setPoints((prev) => {
-          const point: DeliveryPoint = {
-            id: nextId("point"),
-            address: addr.address,
-            latitude: addr.latitude,
-            longitude: addr.longitude,
-            load: prev.length === 0 ? 0 : 1,
-          };
+        const point: DeliveryPoint = {
+          id: nextId("point"),
+          address: addr.address,
+          latitude: addr.latitude,
+          longitude: addr.longitude,
+          quantity: prev.length === 0 ? 0 : 1,
+          stopType: "delivery",
+        };
           const next = [...prev, point];
           // First point added becomes default depot (start + end).
           if (prev.length === 0) {

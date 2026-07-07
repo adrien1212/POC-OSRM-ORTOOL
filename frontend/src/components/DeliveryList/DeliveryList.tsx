@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { DeliveryPoint } from "@/types";
+import type { DeliveryPoint, StopType } from "@/types";
 import { formatCoords } from "@/utils/format";
-import { Check, MapPin, Package, Pencil, Trash2, X } from "lucide-react";
+import { Check, MapPin, Pencil, Trash2, X } from "lucide-react";
 
 interface Props {
   points: DeliveryPoint[];
@@ -14,11 +14,33 @@ interface Props {
 }
 
 function badge(p: DeliveryPoint, startId: string | null, endId: string | null) {
-  if (p.id === startId && p.id === endId)
+  if (p.id === startId && p.id === endId) {
     return { label: "Depot", cls: "bg-[#7c3aed] text-white" };
-  if (p.id === startId) return { label: "Start", cls: "bg-success text-success-foreground" };
-  if (p.id === endId) return { label: "End", cls: "bg-destructive text-destructive-foreground" };
+  }
+  if (p.id === startId) {
+    return { label: "Start", cls: "bg-success text-success-foreground" };
+  }
+  if (p.id === endId) {
+    return { label: "End", cls: "bg-destructive text-destructive-foreground" };
+  }
   return null;
+}
+
+function stopTypeBadge(stopType: StopType) {
+  return stopType === "pickup"
+    ? { label: "Pickup", cls: "bg-amber-500 text-white" }
+    : { label: "Delivery", cls: "bg-primary text-primary-foreground" };
+}
+
+function stopTypeButtonClass(active: boolean, variant: StopType) {
+  const base =
+    "rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors";
+  if (active) {
+    return variant === "pickup"
+      ? `${base} bg-amber-500 text-white`
+      : `${base} bg-primary text-primary-foreground`;
+  }
+  return `${base} border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground`;
 }
 
 export function DeliveryList({
@@ -35,7 +57,8 @@ export function DeliveryList({
     address: "",
     lat: "",
     lng: "",
-    load: "",
+    quantity: "",
+    stopType: "delivery" as StopType,
   });
 
   function startEdit(p: DeliveryPoint) {
@@ -44,19 +67,21 @@ export function DeliveryList({
       address: p.address,
       lat: String(p.latitude),
       lng: String(p.longitude),
-      load: String(p.load),
+      quantity: String(p.quantity),
+      stopType: p.stopType,
     });
   }
 
   function save(id: string) {
     const lat = Number(draft.lat);
     const lng = Number(draft.lng);
-    const load = Number(draft.load);
+    const quantity = Number(draft.quantity);
     onUpdate(id, {
       address: draft.address.trim() || "Untitled",
       latitude: Number.isFinite(lat) ? lat : 0,
       longitude: Number.isFinite(lng) ? lng : 0,
-      load: Number.isFinite(load) && load >= 0 ? Math.floor(load) : 0,
+      quantity: Number.isFinite(quantity) && quantity >= 0 ? Math.floor(quantity) : 0,
+      stopType: draft.stopType,
     });
     setEditingId(null);
   }
@@ -77,8 +102,10 @@ export function DeliveryList({
       {points.map((p, idx) => {
         const b = badge(p, startPointId, endPointId);
         const editing = editingId === p.id;
-        const oversizedDemand = showDemand && p.load > maxVehicleCapacity;
         const isDepot = p.id === startPointId || p.id === endPointId;
+        const oversizedDemand = showDemand && p.quantity > maxVehicleCapacity;
+        const typeBadge = showDemand && !isDepot ? stopTypeBadge(p.stopType) : null;
+
         return (
           <li
             key={p.id}
@@ -106,18 +133,53 @@ export function DeliveryList({
                   />
                 </div>
                 {showDemand && (
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min={0}
-                      value={draft.load}
-                      onChange={(e) =>
-                        setDraft((d) => ({ ...d, load: e.target.value }))
-                      }
-                      placeholder="Demand"
-                      className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
-                    />
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px]">
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Type
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDraft((d) => ({ ...d, stopType: "delivery" }))
+                          }
+                          className={stopTypeButtonClass(
+                            draft.stopType === "delivery",
+                            "delivery",
+                          )}
+                        >
+                          D
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDraft((d) => ({ ...d, stopType: "pickup" }))
+                          }
+                          className={stopTypeButtonClass(
+                            draft.stopType === "pickup",
+                            "pickup",
+                          )}
+                        >
+                          P
+                        </button>
+                      </div>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Quantity
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={draft.quantity}
+                        onChange={(e) =>
+                          setDraft((d) => ({ ...d, quantity: e.target.value }))
+                        }
+                        placeholder="Qty"
+                        className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                      />
+                    </label>
                   </div>
                 )}
                 <div className="flex justify-end gap-1">
@@ -150,6 +212,11 @@ export function DeliveryList({
                         {b.label}
                       </span>
                     )}
+                    {typeBadge && (
+                      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${typeBadge.cls}`}>
+                        {typeBadge.label}
+                      </span>
+                    )}
                     {oversizedDemand && (
                       <span className="shrink-0 rounded bg-destructive px-1.5 py-0.5 text-[10px] font-semibold text-destructive-foreground">
                         Too large
@@ -160,21 +227,62 @@ export function DeliveryList({
                     {formatCoords(p.latitude, p.longitude)}
                   </p>
                   {showDemand && !isDepot ? (
-                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Package className="h-3.5 w-3.5 shrink-0" />
-                      <span className="w-12 shrink-0">Demand</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={p.load}
-                        onChange={(e) =>
-                          onUpdate(p.id, {
-                            load: Math.max(0, Math.floor(Number(e.target.value) || 0)),
-                          })
-                        }
-                        className="w-20 rounded-md border border-input bg-background px-2 py-1 text-xs outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
-                      />
-                    </label>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px]">
+                      <label className="block">
+                        <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Type
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdate(p.id, {
+                                stopType: "delivery",
+                              })
+                            }
+                            className={stopTypeButtonClass(
+                              p.stopType === "delivery",
+                              "delivery",
+                            )}
+                          >
+                            D
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdate(p.id, {
+                                stopType: "pickup",
+                              })
+                            }
+                            className={stopTypeButtonClass(
+                              p.stopType === "pickup",
+                              "pickup",
+                            )}
+                          >
+                            P
+                          </button>
+                        </div>
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Quantity
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={p.quantity}
+                          onChange={(e) =>
+                            onUpdate(p.id, {
+                              quantity: Math.max(
+                                0,
+                                Math.floor(Number(e.target.value) || 0),
+                              ),
+                            })
+                          }
+                          className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs outline-none transition-colors focus:ring-2 focus:ring-ring/30"
+                        />
+                      </label>
+                    </div>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 gap-1">

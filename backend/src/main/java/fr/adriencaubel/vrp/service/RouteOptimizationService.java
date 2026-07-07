@@ -45,8 +45,8 @@ public class RouteOptimizationService {
             throw new IllegalArgumentException("Vehicle count must be greater than zero");
         }
 
-        if (request.stops().stream().anyMatch(stop -> stop.demand() != null && stop.demand() < 0)) {
-            throw new IllegalArgumentException("Demand must be greater than or equal to zero");
+        if (request.stops().stream().anyMatch(stop -> stop.quantity() != null && stop.quantity() < 0)) {
+            throw new IllegalArgumentException("Quantity must be greater than or equal to zero");
         }
 
         long[] vehicleCapacities = resolveVehicleCapacities(request);
@@ -75,7 +75,7 @@ public class RouteOptimizationService {
                     stopCoordonnees.latitude(),
                     stopCoordonnees.longitude()
             ));
-            demands.add(stopRequest.demand() == null ? 0L : stopRequest.demand().longValue());
+            demands.add(resolveSignedDemand(stopRequest));
         }
 
         OSRMDTO osrmdto = distanceMatrix(coordonees);
@@ -192,6 +192,16 @@ public class RouteOptimizationService {
         return resolved;
     }
 
+    private long resolveSignedDemand(OptimizeRouteStopRequest stopRequest) {
+        long quantity = stopRequest.quantity() == null ? 0L : stopRequest.quantity().longValue();
+        if (quantity == 0L) {
+            return 0L;
+        }
+        boolean pickup = stopRequest.stopType() != null
+                && stopRequest.stopType().equalsIgnoreCase("pickup");
+        return pickup ? quantity : -quantity;
+    }
+
     static OptimizeRouteResponse printSolution(
             RoutingModel routing,
             RoutingIndexManager manager,
@@ -214,10 +224,15 @@ public class RouteOptimizationService {
             long routeDistance = 0;
             long routeDuration = 0;
             long routeLoad = 0;
+            long routePeakLoad = 0;
             StringBuilder route = new StringBuilder();
             List<RouteStop> vehicleStops = new ArrayList<>();
 
             route.append("Vehicle ").append(vehicleId).append(": ");
+
+            if (capacityDimension != null) {
+                routePeakLoad = solution.value(capacityDimension.cumulVar(index));
+            }
 
             while (!routing.isEnd(index)) {
                 int nodeIndex = manager.indexToNode(index);
@@ -234,17 +249,23 @@ public class RouteOptimizationService {
                 );
 
                 routeDuration = solution.value(durationDimension.cumulVar(index));
+                if (capacityDimension != null) {
+                    routePeakLoad = Math.max(routePeakLoad, solution.value(capacityDimension.cumulVar(index)));
+                }
             }
 
             int endNodeIndex = manager.indexToNode(index);
             route.append(endNodeIndex);
             vehicleStops.add(stops.get(endNodeIndex));
-            routeLoad = capacityDimension == null ? 0 : solution.value(capacityDimension.cumulVar(index));
+            if (capacityDimension != null) {
+                routePeakLoad = Math.max(routePeakLoad, solution.value(capacityDimension.cumulVar(index)));
+                routeLoad = routePeakLoad;
+            }
 
             logger.info(route.toString());
             logger.info("Route distance: " + routeDistance);
             logger.info("Route duration: " + routeDuration);
-            logger.info("Route load: " + routeLoad);
+            logger.info("Route peak load: " + routeLoad);
 
             totalDistance += routeDistance;
             vehicleRoutes.add(new VehicleRoute(vehicleId, vehicleStops, routeDistance, routeDuration, routeLoad));

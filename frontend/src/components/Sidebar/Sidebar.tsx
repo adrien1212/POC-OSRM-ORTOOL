@@ -29,7 +29,6 @@ function validate(
   vehicles: number,
   vehicleCapacities: number[],
   capacityEnabled: boolean,
-  totalDemand: number,
   maxStopDemand: number,
 ): string[] {
   const errors: string[] = [];
@@ -44,10 +43,6 @@ function validate(
     }
     if (vehicleCapacities.some((cap) => !Number.isInteger(cap) || cap < 1)) {
       errors.push("Each vehicle capacity must be at least 1.");
-    }
-    const totalCapacity = vehicleCapacities.reduce((sum, cap) => sum + cap, 0);
-    if (totalDemand > totalCapacity) {
-      errors.push("Total demand exceeds the fleet capacity.");
     }
     const maxSingleVehicleCapacity = Math.max(...vehicleCapacities, 0);
     if (maxStopDemand > maxSingleVehicleCapacity) {
@@ -71,11 +66,11 @@ export function Sidebar({ result, onResult }: Props) {
     [planner.points, planner.startPointId, planner.endPointId],
   );
   const totalDemand = useMemo(
-    () => deliveryPoints.reduce((sum, point) => sum + point.load, 0),
+    () => deliveryPoints.reduce((sum, point) => sum + point.quantity, 0),
     [deliveryPoints],
   );
   const maxStopDemand = useMemo(
-    () => deliveryPoints.reduce((max, point) => Math.max(max, point.load), 0),
+    () => deliveryPoints.reduce((max, point) => Math.max(max, point.quantity), 0),
     [deliveryPoints],
   );
   const totalCapacity = useMemo(
@@ -102,7 +97,6 @@ export function Sidebar({ result, onResult }: Props) {
         planner.vehicles,
         planner.vehicleCapacities,
         planner.capacityEnabled,
-        totalDemand,
         maxStopDemand,
       ),
     [
@@ -112,7 +106,6 @@ export function Sidebar({ result, onResult }: Props) {
       planner.vehicles,
       planner.vehicleCapacities,
       planner.capacityEnabled,
-      totalDemand,
       maxStopDemand,
     ],
   );
@@ -135,7 +128,7 @@ export function Sidebar({ result, onResult }: Props) {
         )
         .map((p) =>
           planner.capacityEnabled
-            ? { address: p.address, demand: p.load }
+            ? { address: p.address, quantity: p.quantity, stopType: p.stopType }
             : { address: p.address },
         ),
       vehicleCount: planner.vehicles,
@@ -223,7 +216,7 @@ export function Sidebar({ result, onResult }: Props) {
             {planner.capacityEnabled ? (
               <>
                 <SummaryRow
-                  label="Total demand"
+                  label="Total quantity"
                   value={String(totalDemand)}
                 />
                 <SummaryRow label="Fleet cap." value={String(totalCapacity)} />

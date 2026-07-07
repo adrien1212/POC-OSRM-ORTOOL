@@ -45,7 +45,7 @@ export function RouteSummary({
     result.routes.flatMap((r) => r.stops.map((s) => s.pointId)),
   ).size;
   const totalLoad = result.routes.reduce(
-    (sum, route) => sum + route.loadUnits,
+    (sum, route) => Math.max(sum, route.loadUnits),
     0,
   );
   const fleetCapacity = vehicleCapacities.reduce((sum, cap) => sum + cap, 0);
@@ -76,7 +76,7 @@ export function RouteSummary({
         {showCapacity && (
           <Stat
             icon={<Package className="h-3.5 w-3.5" />}
-            label="Total load"
+            label="Peak load"
             value={`${totalLoad} / ${fleetCapacity}`}
           />
         )}
@@ -124,7 +124,7 @@ export function RouteSummary({
                 </div>
                 {showCapacity && (
                   <div className="mt-2 text-xs text-muted-foreground">
-                    Load: {route.loadUnits} / {capacity}
+                    Peak load: {route.loadUnits} / {capacity}
                   </div>
                 )}
               </button>
