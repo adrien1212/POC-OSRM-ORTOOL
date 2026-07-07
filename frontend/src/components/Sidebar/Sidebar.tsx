@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePlanner } from "@/hooks/usePlannerStore";
 import { useOptimize } from "@/hooks/useOptimize";
 import type {
@@ -55,6 +55,8 @@ function validate(
 export function Sidebar({ result, onResult }: Props) {
   const planner = usePlanner();
   const optimize = useOptimize();
+  const [fakeProgress, setFakeProgress] = useState(0);
+  const progressTimerRef = useRef<number | null>(null);
   const pointByAddress = useMemo(() => {
     return new Map(planner.points.map((p) => [p.address, p] as const));
   }, [planner.points]);
@@ -106,6 +108,70 @@ export function Sidebar({ result, onResult }: Props) {
   );
 
   const canOptimize = errors.length === 0 && !optimize.isPending;
+
+  useEffect(() => {
+    if (progressTimerRef.current !== null) {
+      window.clearTimeout(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+
+    if (!optimize.isPending) {
+      setFakeProgress(0);
+      return;
+    }
+
+    const fakeWindowMs = Math.max(1000, planner.computationTime * 1500);
+    const start = performance.now();
+    setFakeProgress(0);
+
+    const step = () => {
+      const elapsed = performance.now() - start;
+      const warmupMs = Math.min(1800, fakeWindowMs * 0.4);
+      const easedElapsed = Math.max(0, elapsed - warmupMs);
+      const easedWindow = Math.max(1, fakeWindowMs - warmupMs);
+      const targetProgress = Math.min(95, (easedElapsed / easedWindow) * 95);
+      setFakeProgress((current) => {
+        if (current >= 95) return 95;
+        if (elapsed < warmupMs) {
+          return Math.min(current + 0.3 + Math.random() * 0.7, 3);
+        }
+        const remaining = Math.max(targetProgress - current, 0);
+        const jump =
+          current < 20
+            ? 0.5 + Math.random() * 1
+            : current < 45
+              ? 1.5 + Math.random() * 2
+              : current < 75
+                ? 2 + Math.random() * 2.5
+                : 1 + Math.random() * 1.5;
+        return Math.min(95, current + Math.max(jump, remaining > 0 ? remaining * 0.18 : 0));
+      });
+
+      const elapsedAfterStep = performance.now() - start;
+      if (elapsedAfterStep < fakeWindowMs) {
+        let nextDelay = 120 + Math.random() * 220;
+        if (elapsedAfterStep < warmupMs) {
+          nextDelay = 520 + Math.random() * 300;
+        } else if (elapsedAfterStep < fakeWindowMs * 0.5) {
+          nextDelay = 220 + Math.random() * 180;
+        } else if (elapsedAfterStep < fakeWindowMs * 0.8) {
+          nextDelay = 120 + Math.random() * 130;
+        } else {
+          nextDelay = 80 + Math.random() * 90;
+        }
+        progressTimerRef.current = window.setTimeout(step, nextDelay);
+      }
+    };
+
+    progressTimerRef.current = window.setTimeout(step, 800);
+
+    return () => {
+      if (progressTimerRef.current !== null) {
+        window.clearTimeout(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
+    };
+  }, [optimize.isPending, planner.computationTime]);
 
   async function handleOptimize() {
     if (!canOptimize) return;
@@ -237,7 +303,7 @@ export function Sidebar({ result, onResult }: Props) {
                   Computation time
                 </p>
                 <p className="text-xs leading-5 text-muted-foreground">
-                  Maximum solver time to find the best solutionin seconds.
+                  Maximum solver time to find the best solution in seconds.
                 </p>
               </div>
               <span className="rounded-full bg-secondary px-2 py-1 text-[11px] font-medium text-secondary-foreground">
@@ -360,6 +426,12 @@ export function Sidebar({ result, onResult }: Props) {
           )}
           {optimize.isPending ? "Optimizing…" : "Optimize Routes"}
         </button>
+        <div className="h-2 overflow-hidden rounded-full bg-secondary/70">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-200 ease-out"
+            style={{ width: `${fakeProgress}%` }}
+          />
+        </div>
 
         {result && (
           <Section
