@@ -6,6 +6,8 @@ import { Clock, Package, Route as RouteIcon, Truck } from "lucide-react";
 interface Props {
   result: OptimizeResponse;
   points: DeliveryPoint[];
+  vehicleCapacity: number;
+  vehicleCapacities: number[];
   selectedRouteId: string | null;
   onSelectRoute: (id: string | null) => void;
 }
@@ -33,6 +35,8 @@ function Stat({
 export function RouteSummary({
   result,
   points,
+  vehicleCapacity,
+  vehicleCapacities,
   selectedRouteId,
   onSelectRoute,
 }: Props) {
@@ -40,10 +44,15 @@ export function RouteSummary({
   const deliveries = new Set(
     result.routes.flatMap((r) => r.stops.map((s) => s.pointId)),
   ).size;
+  const totalLoad = result.routes.reduce(
+    (sum, route) => sum + route.loadUnits,
+    0,
+  );
+  const fleetCapacity = vehicleCapacities.reduce((sum, cap) => sum + cap, 0);
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
         <Stat
           icon={<RouteIcon className="h-3.5 w-3.5" />}
           label="Total distance"
@@ -61,8 +70,13 @@ export function RouteSummary({
         />
         <Stat
           icon={<Package className="h-3.5 w-3.5" />}
-          label="Deliveries"
+          label="Visited stops"
           value={String(deliveries)}
+        />
+        <Stat
+          icon={<Package className="h-3.5 w-3.5" />}
+          label="Total load"
+          value={`${totalLoad} / ${fleetCapacity}`}
         />
       </div>
 
@@ -70,6 +84,8 @@ export function RouteSummary({
         {result.routes.map((route, idx) => {
           const color = routeColor(idx);
           const selected = selectedRouteId === route.vehicleId;
+          const capacity =
+            vehicleCapacities[Number(route.vehicleId)] ?? vehicleCapacity;
           return (
             <li key={route.vehicleId}>
               <button
@@ -103,6 +119,9 @@ export function RouteSummary({
                       {i < route.stops.length - 1 && <span>→</span>}
                     </span>
                   ))}
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Load: {route.loadUnits} / {capacity}
                 </div>
               </button>
             </li>

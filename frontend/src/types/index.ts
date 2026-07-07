@@ -3,6 +3,7 @@ export interface DeliveryPoint {
   address: string;
   latitude: number;
   longitude: number;
+  load: number;
 }
 
 export interface AddressResult {
@@ -28,6 +29,7 @@ export interface OptimizeRequestPoint {
   address: string;
   lat: number;
   lng: number;
+  load: number;
 }
 
 export interface OptimizeRequest {
@@ -52,6 +54,7 @@ export interface OptimizedRoute {
   vehicleId: string;
   distanceMeters: number;
   durationSeconds: number;
+  loadUnits: number;
   stops: RouteStop[];
   geometry: GeoLineString;
 }
@@ -69,8 +72,10 @@ export interface OptimizeResponse {
 
 export interface BackendOptimizeRouteRequest {
   depot: string;
-  addresses: string[];
+  stops: BackendOptimizeRouteStopRequest[];
   vehicleCount: number;
+  vehicleCapacity: number;
+  vehicleCapacities: number[];
 }
 
 export interface BackendRouteStop {
@@ -79,11 +84,17 @@ export interface BackendRouteStop {
   longitude: number;
 }
 
+export interface BackendOptimizeRouteStopRequest {
+  address: string;
+  demand: number;
+}
+
 export interface BackendVehicleRoute {
   vehicleId: number;
   stops: BackendRouteStop[];
   totalDistanceMeters: number;
   totalDurationSeconds: number;
+  totalLoadUnits: number;
 }
 
 export interface BackendOptimizeRouteResponse {

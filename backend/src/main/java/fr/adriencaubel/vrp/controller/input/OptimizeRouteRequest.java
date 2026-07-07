@@ -4,6 +4,7 @@ import java.util.List;
 
 public record OptimizeRouteRequest(
         String depot,
-        List<String> addresses,
-        int vehicleCount
+        List<OptimizeRouteStopRequest> stops,
+        int vehicleCount,
+        List<Integer> vehicleCapacities
 ) {}

@@ -12,6 +12,7 @@ import { DeliveryList } from "@/components/DeliveryList/DeliveryList";
 import { RouteSummary } from "@/components/RouteSummary/RouteSummary";
 import { Section } from "./Section";
 import { DepotSelector } from "./DepotSelector";
+import { CapacityConfig } from "./CapacityConfig";
 import { VehiclesConfig } from "./VehiclesConfig";
 import { AlertCircle, Loader2, RotateCcw, Sparkles } from "lucide-react";
 
@@ -25,6 +26,10 @@ function validate(
   startId: string | null,
   endId: string | null,
   vehicles: number,
+  vehicleCapacity: number,
+  vehicleCapacities: number[],
+  totalDemand: number,
+  maxStopDemand: number,
 ): string[] {
   const errors: string[] = [];
   if (pointsLen < 2) errors.push("Add at least two delivery points.");
@@ -32,6 +37,22 @@ function validate(
   if (!endId) errors.push("Select an end depot.");
   if (!Number.isInteger(vehicles) || vehicles < 1)
     errors.push("Vehicle count must be at least 1.");
+  if (!Number.isInteger(vehicleCapacity) || vehicleCapacity < 1)
+    errors.push("Vehicle capacity must be at least 1.");
+  if (vehicleCapacities.length !== vehicles) {
+    errors.push("Each vehicle must have a capacity value.");
+  }
+  if (vehicleCapacities.some((cap) => !Number.isInteger(cap) || cap < 1)) {
+    errors.push("Each vehicle capacity must be at least 1.");
+  }
+  const totalCapacity = vehicleCapacities.reduce((sum, cap) => sum + cap, 0);
+  if (totalDemand > totalCapacity) {
+    errors.push("Total demand exceeds the fleet capacity.");
+  }
+  const maxSingleVehicleCapacity = Math.max(...vehicleCapacities, 0);
+  if (maxStopDemand > maxSingleVehicleCapacity) {
+    errors.push("One stop exceeds the capacity of every vehicle.");
+  }
   return errors;
 }
 
@@ -41,6 +62,30 @@ export function Sidebar({ result, onResult }: Props) {
   const pointByAddress = useMemo(() => {
     return new Map(planner.points.map((p) => [p.address, p] as const));
   }, [planner.points]);
+  const deliveryPoints = useMemo(
+    () =>
+      planner.points.filter(
+        (p) => p.id !== planner.startPointId && p.id !== planner.endPointId,
+      ),
+    [planner.points, planner.startPointId, planner.endPointId],
+  );
+  const totalDemand = useMemo(
+    () => deliveryPoints.reduce((sum, point) => sum + point.load, 0),
+    [deliveryPoints],
+  );
+  const maxStopDemand = useMemo(
+    () => deliveryPoints.reduce((max, point) => Math.max(max, point.load), 0),
+    [deliveryPoints],
+  );
+  const totalCapacity = useMemo(
+    () =>
+      planner.vehicleCapacities.reduce((sum, cap) => sum + cap, 0),
+    [planner.vehicleCapacities],
+  );
+  const maxVehicleCapacity = useMemo(
+    () => Math.max(...planner.vehicleCapacities, planner.vehicleCapacity),
+    [planner.vehicleCapacities, planner.vehicleCapacity],
+  );
   const startDepotLabel = displayDepotLabel(
     planner.points,
     planner.startPointId,
@@ -54,12 +99,20 @@ export function Sidebar({ result, onResult }: Props) {
         planner.startPointId,
         planner.endPointId,
         planner.vehicles,
+        planner.vehicleCapacity,
+        planner.vehicleCapacities,
+        totalDemand,
+        maxStopDemand,
       ),
     [
       planner.points.length,
       planner.startPointId,
       planner.endPointId,
       planner.vehicles,
+      planner.vehicleCapacity,
+      planner.vehicleCapacities,
+      totalDemand,
+      maxStopDemand,
     ],
   );
 
@@ -75,12 +128,17 @@ export function Sidebar({ result, onResult }: Props) {
 
     const req: BackendOptimizeRouteRequest = {
       depot: depot.address,
-      addresses: planner.points
+      stops: planner.points
         .filter(
           (p) => p.id !== planner.startPointId && p.id !== planner.endPointId,
         )
-        .map((p) => p.address),
+        .map((p) => ({
+          address: p.address,
+          demand: p.load,
+        })),
       vehicleCount: planner.vehicles,
+      vehicleCapacity: planner.vehicleCapacity,
+      vehicleCapacities: planner.vehicleCapacities,
     };
     try {
       const res = await optimize.mutateAsync(req);
@@ -109,6 +167,7 @@ export function Sidebar({ result, onResult }: Props) {
             points={planner.points}
             startPointId={planner.startPointId}
             endPointId={planner.endPointId}
+            maxVehicleCapacity={maxVehicleCapacity}
             onUpdate={planner.updatePoint}
             onDelete={planner.deletePoint}
           />
@@ -129,6 +188,15 @@ export function Sidebar({ result, onResult }: Props) {
             vehicles={planner.vehicles}
             onChange={planner.setVehicles}
           />
+          <div className="pt-3">
+            <CapacityConfig
+              vehicleCapacity={planner.vehicleCapacity}
+              vehicles={planner.vehicles}
+              vehicleCapacities={planner.vehicleCapacities}
+              onDefaultChange={planner.setVehicleCapacity}
+              onVehicleCapacityChange={planner.setVehicleCapacityAt}
+            />
+          </div>
         </Section>
 
         <Section title="Summary">
@@ -138,6 +206,15 @@ export function Sidebar({ result, onResult }: Props) {
               value={String(planner.points.length)}
             />
             <SummaryRow label="Vehicles" value={String(planner.vehicles)} />
+            <SummaryRow
+              label="Per-vehicle cap."
+              value={String(planner.vehicleCapacity)}
+            />
+            <SummaryRow
+              label="Total demand"
+              value={String(totalDemand)}
+            />
+            <SummaryRow label="Fleet cap." value={String(totalCapacity)} />
             <SummaryRow label="Start depot" value={startDepotLabel} />
             <SummaryRow label="End depot" value={endDepotLabel} />
           </dl>
@@ -194,6 +271,8 @@ export function Sidebar({ result, onResult }: Props) {
             <RouteSummary
               result={result}
               points={planner.points}
+              vehicleCapacity={planner.vehicleCapacity}
+              vehicleCapacities={planner.vehicleCapacities}
               selectedRouteId={planner.selectedRouteId}
               onSelectRoute={planner.setSelectedRouteId}
             />
@@ -228,6 +307,7 @@ function mapBackendResponse(
       vehicleId: String(vehicle.vehicleId),
       distanceMeters: Math.round(vehicle.totalDistanceMeters),
       durationSeconds: Math.round(vehicle.totalDurationSeconds),
+      loadUnits: Math.round(vehicle.totalLoadUnits),
       stops,
       geometry,
     };

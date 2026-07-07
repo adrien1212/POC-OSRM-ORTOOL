@@ -1,12 +1,13 @@
 import { useState } from "react";
 import type { DeliveryPoint } from "@/types";
 import { formatCoords } from "@/utils/format";
-import { Check, MapPin, Pencil, Trash2, X } from "lucide-react";
+import { Check, MapPin, Package, Pencil, Trash2, X } from "lucide-react";
 
 interface Props {
   points: DeliveryPoint[];
   startPointId: string | null;
   endPointId: string | null;
+  maxVehicleCapacity: number;
   onUpdate: (id: string, patch: Partial<Omit<DeliveryPoint, "id">>) => void;
   onDelete: (id: string) => void;
 }
@@ -23,11 +24,17 @@ export function DeliveryList({
   points,
   startPointId,
   endPointId,
+  maxVehicleCapacity,
   onUpdate,
   onDelete,
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ address: "", lat: "", lng: "" });
+  const [draft, setDraft] = useState({
+    address: "",
+    lat: "",
+    lng: "",
+    load: "",
+  });
 
   function startEdit(p: DeliveryPoint) {
     setEditingId(p.id);
@@ -35,16 +42,19 @@ export function DeliveryList({
       address: p.address,
       lat: String(p.latitude),
       lng: String(p.longitude),
+      load: String(p.load),
     });
   }
 
   function save(id: string) {
     const lat = Number(draft.lat);
     const lng = Number(draft.lng);
+    const load = Number(draft.load);
     onUpdate(id, {
       address: draft.address.trim() || "Untitled",
       latitude: Number.isFinite(lat) ? lat : 0,
       longitude: Number.isFinite(lng) ? lng : 0,
+      load: Number.isFinite(load) && load >= 0 ? Math.floor(load) : 0,
     });
     setEditingId(null);
   }
@@ -65,6 +75,7 @@ export function DeliveryList({
       {points.map((p, idx) => {
         const b = badge(p, startPointId, endPointId);
         const editing = editingId === p.id;
+        const oversizedDemand = p.load > maxVehicleCapacity;
         return (
           <li
             key={p.id}
@@ -91,6 +102,17 @@ export function DeliveryList({
                     className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
                   />
                 </div>
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="number"
+                    min={0}
+                    value={draft.load}
+                    onChange={(e) => setDraft((d) => ({ ...d, load: e.target.value }))}
+                    placeholder="Demand"
+                    className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                  />
+                </div>
                 <div className="flex justify-end gap-1">
                   <button
                     onClick={() => save(p.id)}
@@ -111,7 +133,7 @@ export function DeliveryList({
                 <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
                   {idx + 1}
                 </span>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 space-y-2">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-medium text-foreground">
                       {p.address}
@@ -121,10 +143,30 @@ export function DeliveryList({
                         {b.label}
                       </span>
                     )}
+                    {oversizedDemand && (
+                      <span className="shrink-0 rounded bg-destructive px-1.5 py-0.5 text-[10px] font-semibold text-destructive-foreground">
+                        Too large
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {formatCoords(p.latitude, p.longitude)}
                   </p>
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Package className="h-3.5 w-3.5 shrink-0" />
+                    <span className="w-12 shrink-0">Demand</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={p.load}
+                      onChange={(e) =>
+                        onUpdate(p.id, {
+                          load: Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                        })
+                      }
+                      className="w-20 rounded-md border border-input bg-background px-2 py-1 text-xs outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
+                    />
+                  </label>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button

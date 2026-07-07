@@ -16,6 +16,8 @@ interface PlannerState {
   startPointId: string | null;
   endPointId: string | null;
   vehicles: number;
+  vehicleCapacity: number;
+  vehicleCapacities: number[];
   options: OptimizeOptions;
   selectedRouteId: string | null;
 
@@ -25,6 +27,8 @@ interface PlannerState {
   setStartPointId: (id: string | null) => void;
   setEndPointId: (id: string | null) => void;
   setVehicles: (n: number) => void;
+  setVehicleCapacity: (n: number) => void;
+  setVehicleCapacityAt: (index: number, capacity: number) => void;
   setOptions: (patch: Partial<OptimizeOptions>) => void;
   setSelectedRouteId: (id: string | null) => void;
 }
@@ -36,6 +40,8 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   const [startPointId, setStartPointId] = useState<string | null>(null);
   const [endPointId, setEndPointId] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState(1);
+  const [vehicleCapacity, setVehicleCapacity] = useState(20);
+  const [vehicleCapacities, setVehicleCapacities] = useState<number[]>([20]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [options, setOptionsState] = useState<OptimizeOptions>({
     distanceMode: "real_road",
@@ -50,16 +56,19 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       startPointId,
       endPointId,
       vehicles,
+      vehicleCapacity,
+      vehicleCapacities,
       options,
       selectedRouteId,
       addPoint: (addr) => {
-        const point: DeliveryPoint = {
-          id: nextId("point"),
-          address: addr.address,
-          latitude: addr.latitude,
-          longitude: addr.longitude,
-        };
         setPoints((prev) => {
+          const point: DeliveryPoint = {
+            id: nextId("point"),
+            address: addr.address,
+            latitude: addr.latitude,
+            longitude: addr.longitude,
+            load: prev.length === 0 ? 0 : 1,
+          };
           const next = [...prev, point];
           // First point added becomes default depot (start + end).
           if (prev.length === 0) {
@@ -80,11 +89,48 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       },
       setStartPointId,
       setEndPointId,
-      setVehicles: (n) => setVehicles(Math.max(1, Math.floor(n || 1))),
+      setVehicles: (n) =>
+        setVehicles((prevVehicles) => {
+          const nextVehicles = Math.max(1, Math.floor(n || 1));
+          setVehicleCapacities((prevCapacities) => {
+            const next = [...prevCapacities];
+            if (nextVehicles > next.length) {
+              for (let i = next.length; i < nextVehicles; i += 1) {
+                next.push(vehicleCapacity);
+              }
+            } else if (nextVehicles < next.length) {
+              next.length = nextVehicles;
+            }
+            return next;
+          });
+          return nextVehicles;
+        }),
+      setVehicleCapacity: (n) => {
+        const nextCapacity = Math.max(1, Math.floor(n || 1));
+        setVehicleCapacity(nextCapacity);
+        setVehicleCapacities((prev) =>
+          prev.map((cap) => (cap === vehicleCapacity ? nextCapacity : cap)),
+        );
+      },
+      setVehicleCapacityAt: (index, capacity) =>
+        setVehicleCapacities((prev) =>
+          prev.map((cap, i) =>
+            i === index ? Math.max(1, Math.floor(capacity || 1)) : cap,
+          ),
+        ),
       setOptions: (patch) => setOptionsState((prev) => ({ ...prev, ...patch })),
       setSelectedRouteId,
     };
-  }, [points, startPointId, endPointId, vehicles, options, selectedRouteId]);
+  }, [
+    points,
+    startPointId,
+    endPointId,
+    vehicles,
+    vehicleCapacity,
+    vehicleCapacities,
+    options,
+    selectedRouteId,
+  ]);
 
   return <PlannerContext.Provider value={value}>{children}</PlannerContext.Provider>;
 }
