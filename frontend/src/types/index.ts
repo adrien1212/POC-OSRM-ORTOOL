@@ -79,6 +79,9 @@ export interface BackendOptimizeRouteRequest {
   vehicleCount: number;
   vehicleCapacities?: number[];
   isUseAllVehicule: boolean;
+  maximumDistance: number;
+  maximumDuration: number;
+  computationTime: number;
 }
 
 export interface BackendRouteStop {

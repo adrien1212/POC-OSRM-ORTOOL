@@ -88,7 +88,10 @@ public class RouteOptimizationService {
                 osrmdto.durations(),
                 demands,
                 stops,
-                request.isUseAllVehicule()
+                request.isUseAllVehicule(),
+                request.maximumDistance(),
+                request.maximumDuration(),
+                request.computationTime()
         );
     }
 
@@ -100,7 +103,10 @@ public class RouteOptimizationService {
             long[][] durationMatrix,
             List<Long> demands,
             List<RouteStop> stops,
-            boolean isUseAllVehicule
+            boolean isUseAllVehicule,
+            int maximumDistance,
+            int maximumDuration,
+            int computationTime
     ) {
 
         RoutingIndexManager manager = new RoutingIndexManager(
@@ -152,8 +158,8 @@ public class RouteOptimizationService {
         );
 
         List<RoutingModelDecorator> decorators = new ArrayList<>(List.of(
-                new DistanceDimensionDecorator(2_000_000L, 100),
-                new DurationDimensionDecorator(24 * 3600L),
+                new DistanceDimensionDecorator(maximumDistance * 1000L, 100),
+                new DurationDimensionDecorator(maximumDuration * 3600L),
                 new CapacityDimensionDecorator()
         ));
         if (isUseAllVehicule) {
@@ -169,7 +175,7 @@ public class RouteOptimizationService {
                         .toBuilder()
                         .setFirstSolutionStrategy(FirstSolutionStrategy.Value.PATH_CHEAPEST_ARC)
                         .setLocalSearchMetaheuristic(LocalSearchMetaheuristic.Value.GUIDED_LOCAL_SEARCH)
-                        .setTimeLimit(Duration.newBuilder().setSeconds(10).build())
+                        .setTimeLimit(Duration.newBuilder().setSeconds(computationTime).build())
                         .build();
 
         Assignment solution = routing.solveWithParameters(searchParameters);

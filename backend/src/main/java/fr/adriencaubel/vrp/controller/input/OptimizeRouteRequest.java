@@ -7,5 +7,8 @@ public record OptimizeRouteRequest(
         List<OptimizeRouteStopRequest> stops,
         int vehicleCount,
         List<Integer> vehicleCapacities,
-        boolean isUseAllVehicule
+        boolean isUseAllVehicule,
+        int maximumDistance,
+        int maximumDuration,
+        int computationTime
 ) {}

@@ -13,9 +13,11 @@ import { RouteSummary } from "@/components/RouteSummary/RouteSummary";
 import { Section } from "./Section";
 import { DepotSelector } from "./DepotSelector";
 import { CapacityConfig } from "./CapacityConfig";
+import { NumberConfig } from "./NumberConfig";
 import { VehiclesConfig } from "./VehiclesConfig";
 import { AlertCircle, Loader2, RotateCcw, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 
 interface Props {
   result: OptimizeResponse | null;
@@ -125,6 +127,9 @@ export function Sidebar({ result, onResult }: Props) {
       vehicleCount: planner.vehicles,
       vehicleCapacities: planner.capacityEnabled ? planner.vehicleCapacities : undefined,
       isUseAllVehicule: planner.useAllVehicule,
+      maximumDistance: planner.maximumDistance,
+      maximumDuration: planner.maximumDuration,
+      computationTime: planner.computationTime,
     };
     try {
       const res = await optimize.mutateAsync(req);
@@ -179,12 +184,92 @@ export function Sidebar({ result, onResult }: Props) {
           />
         </Section>
 
+        <Section title="Settings">
+{/*           <div className="space-y-3 rounded-xl border border-border bg-card p-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Optimization objective
+                </p>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Choose whether the solver should favor shorter distance or shorter duration.
+                </p>
+              </div>
+              <span className="rounded-full bg-secondary px-2 py-1 text-[11px] font-medium text-secondary-foreground">
+                {planner.optimizationMode === "duration" ? "Duration" : "Distance"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <ModeButton
+                active={planner.optimizationMode === "distance"}
+                onClick={() => planner.setOptimizationMode("distance")}
+                title="Distance"
+                subtitle="Best for shortest route"
+              />
+              <ModeButton
+                active={planner.optimizationMode === "duration"}
+                onClick={() => planner.setOptimizationMode("duration")}
+                title="Duration"
+                subtitle="Best for fastest route"
+              />
+            </div>
+          </div> */}
+
+          <NumberConfig
+            title={"Maximum distance (km)"}
+            quantity={planner.maximumDistance}
+            onChange={planner.setMaximumDistance}
+          />
+
+          <NumberConfig
+            title={"Maximum distance (heures)"}
+            quantity={planner.maximumDuration}
+            onChange={planner.setMaximumDuration}
+          />
+
+
+
+          <div className="space-y-3 rounded-xl border border-border bg-card p-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Computation time
+                </p>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Maximum solver time to find the best solutionin seconds.
+                </p>
+              </div>
+              <span className="rounded-full bg-secondary px-2 py-1 text-[11px] font-medium text-secondary-foreground">
+                {planner.computationTime}s
+              </span>
+            </div>
+            <div className="space-y-2">
+              <Slider
+                value={[planner.computationTime]}
+                min={1}
+                max={60}
+                step={1}
+                onValueChange={([value]) =>
+                  planner.setComputationTime(value ?? 1)
+                }
+              />
+              <div className="flex justify-between text-[11px] text-muted-foreground">
+                <span>1s</span>
+                <span>60s</span>
+              </div>
+            </div>
+          </div>
+        </Section>
+
+
         <Section title="Fleet">
-          <VehiclesConfig
-            vehicles={planner.vehicles}
+          <NumberConfig
+            title={"Vehicules"}
+            quantity={planner.vehicles}
             onChange={planner.setVehicles}
           />
-          <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
+          <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5">
             <div>
               <p className="text-sm font-medium text-foreground">Use all vehicles</p>
               <p className="text-xs text-muted-foreground">
@@ -196,7 +281,7 @@ export function Sidebar({ result, onResult }: Props) {
               onCheckedChange={planner.setUseAllVehicule}
             />
           </div>
-          <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
+          <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5">
             <div>
               <p className="text-sm font-medium text-foreground">Capacity constraints</p>
               <p className="text-xs text-muted-foreground">
@@ -301,6 +386,34 @@ export function Sidebar({ result, onResult }: Props) {
         )}
       </div>
     </aside>
+  );
+}
+
+function ModeButton({
+  active,
+  onClick,
+  title,
+  subtitle,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "rounded-lg border px-3 py-2 text-left transition-colors",
+        active
+          ? "border-primary bg-primary/10 text-foreground"
+          : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-foreground",
+      ].join(" ")}
+    >
+      <span className="block text-sm font-semibold">{title}</span>
+      <span className="mt-0.5 block text-xs leading-5">{subtitle}</span>
+    </button>
   );
 }
 

@@ -68,9 +68,12 @@ interface PlannerState {
   vehicleCapacities: number[];
   capacityEnabled: boolean;
   useAllVehicule: boolean;
+  optimizationMode: string;
+  computationTime: number;
   options: OptimizeOptions;
   selectedRouteId: string | null;
-
+  maximumDistance: number;
+  maximumDuration: number;
   addPoint: (addr: AddressResult) => void;
   updatePoint: (id: string, patch: Partial<Omit<DeliveryPoint, "id">>) => void;
   deletePoint: (id: string) => void;
@@ -80,9 +83,13 @@ interface PlannerState {
   setVehicleCapacityAt: (index: number, capacity: number) => void;
   setCapacityEnabled: (enabled: boolean) => void;
   setUseAllVehicule: (enabled: boolean) => void;
+  setOptimizationMode: (value: string) => void;
+  setComputationTime: (value: number) => void;
   loadDemo: () => void;
   setOptions: (patch: Partial<OptimizeOptions>) => void;
   setSelectedRouteId: (id: string | null) => void;
+  setMaximumDistance:(v: number) => void
+  setMaximumDuration:(v: number) => void
 }
 
 const PlannerContext = createContext<PlannerState | null>(null);
@@ -93,8 +100,13 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   const [endPointId, setEndPointId] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState(1);
   const [vehicleCapacities, setVehicleCapacities] = useState<number[]>([20]);
+  const [maximumDistance, setMaximumDistance] = useState<number>(2000);
+  const [maximumDuration, setMaximumDuration] = useState<number>(24);
+  const [computationTime, setComputationTime] = useState<number>(5);
+
   const [capacityEnabled, setCapacityEnabled] = useState(false);
   const [useAllVehicule, setUseAllVehicule] = useState(false);
+  const [optimizationMode, setOptimizationMode] = useState<string>("distance");
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [options, setOptionsState] = useState<OptimizeOptions>({
     distanceMode: "real_road",
@@ -112,6 +124,10 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       vehicleCapacities,
       capacityEnabled,
       useAllVehicule,
+      optimizationMode,
+      computationTime,
+      maximumDistance,
+      maximumDuration,
       options,
       selectedRouteId,
       addPoint: (addr) => {
@@ -168,6 +184,10 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
         ),
       setCapacityEnabled,
       setUseAllVehicule,
+      setOptimizationMode,
+      setComputationTime,
+      setMaximumDistance,
+      setMaximumDuration,
       loadDemo: () => {
         const demoPoints: DeliveryPoint[] = DEMO_LOCATIONS.map(([id, address, longitude, latitude]) => ({
           id: nextId(`demo-${id.toLowerCase()}`),
@@ -184,6 +204,8 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
         setVehicleCapacities(Array.from({ length: 8 }, () => 20));
         setCapacityEnabled(false);
         setUseAllVehicule(false);
+        setOptimizationMode("distance");
+        setComputationTime(5);
         setSelectedRouteId(null);
       },
       setOptions: (patch) => setOptionsState((prev) => ({ ...prev, ...patch })),
@@ -195,8 +217,12 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
     endPointId,
     vehicles,
     vehicleCapacities,
+    maximumDistance,
+    maximumDuration,
     capacityEnabled,
     useAllVehicule,
+    optimizationMode,
+    computationTime,
     options,
     selectedRouteId,
   ]);
