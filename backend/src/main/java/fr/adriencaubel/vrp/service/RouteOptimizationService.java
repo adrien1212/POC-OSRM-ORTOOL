@@ -153,7 +153,7 @@ public class RouteOptimizationService {
 
         List<RoutingModelDecorator> decorators = new ArrayList<>(List.of(
                 new DistanceDimensionDecorator(2_000_000L, 100),
-                new DurationDimensionDecorator(5 * 3600L),
+                new DurationDimensionDecorator(24 * 3600L),
                 new CapacityDimensionDecorator()
         ));
         if (isUseAllVehicule) {
@@ -169,7 +169,7 @@ public class RouteOptimizationService {
                         .toBuilder()
                         .setFirstSolutionStrategy(FirstSolutionStrategy.Value.PATH_CHEAPEST_ARC)
                         .setLocalSearchMetaheuristic(LocalSearchMetaheuristic.Value.GUIDED_LOCAL_SEARCH)
-                        .setTimeLimit(Duration.newBuilder().setSeconds(5).build())
+                        .setTimeLimit(Duration.newBuilder().setSeconds(10).build())
                         .build();
 
         Assignment solution = routing.solveWithParameters(searchParameters);

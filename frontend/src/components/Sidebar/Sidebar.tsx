@@ -145,6 +145,15 @@ export function Sidebar({ result, onResult }: Props) {
     <aside className="flex h-full w-full flex-col overflow-y-auto border-r border-border bg-background">
       <div className="space-y-6 p-4">
         <Section title="Search address">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={planner.loadDemo}
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+            >
+              Load demo
+            </button>
+          </div>
           <AddressSearch onSelect={planner.addPoint} />
         </Section>
 
