@@ -78,6 +78,7 @@ export interface BackendOptimizeRouteRequest {
   stops: BackendOptimizeRouteStopRequest[];
   vehicleCount: number;
   vehicleCapacities?: number[];
+  isUseAllVehicule: boolean;
 }
 
 export interface BackendRouteStop {

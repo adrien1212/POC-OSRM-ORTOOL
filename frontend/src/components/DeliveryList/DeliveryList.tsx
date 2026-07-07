@@ -6,22 +6,15 @@ import { Check, MapPin, Pencil, Trash2, X } from "lucide-react";
 interface Props {
   points: DeliveryPoint[];
   startPointId: string | null;
-  endPointId: string | null;
   maxVehicleCapacity: number;
   showDemand: boolean;
   onUpdate: (id: string, patch: Partial<Omit<DeliveryPoint, "id">>) => void;
   onDelete: (id: string) => void;
 }
 
-function badge(p: DeliveryPoint, startId: string | null, endId: string | null) {
-  if (p.id === startId && p.id === endId) {
-    return { label: "Depot", cls: "bg-[#7c3aed] text-white" };
-  }
+function badge(p: DeliveryPoint, startId: string | null) {
   if (p.id === startId) {
-    return { label: "Start", cls: "bg-success text-success-foreground" };
-  }
-  if (p.id === endId) {
-    return { label: "End", cls: "bg-destructive text-destructive-foreground" };
+    return { label: "Depot", cls: "bg-[#7c3aed] text-white" };
   }
   return null;
 }
@@ -46,7 +39,6 @@ function stopTypeButtonClass(active: boolean, variant: StopType) {
 export function DeliveryList({
   points,
   startPointId,
-  endPointId,
   maxVehicleCapacity,
   showDemand,
   onUpdate,
@@ -100,9 +92,9 @@ export function DeliveryList({
   return (
     <ul className="space-y-2">
       {points.map((p, idx) => {
-        const b = badge(p, startPointId, endPointId);
+        const b = badge(p, startPointId);
         const editing = editingId === p.id;
-        const isDepot = p.id === startPointId || p.id === endPointId;
+        const isDepot = p.id === startPointId;
         const oversizedDemand = showDemand && p.quantity > maxVehicleCapacity;
         const typeBadge = showDemand && !isDepot ? stopTypeBadge(p.stopType) : null;
 

@@ -87,7 +87,8 @@ public class RouteOptimizationService {
                 osrmdto.distances(),
                 osrmdto.durations(),
                 demands,
-                stops
+                stops,
+                request.isUseAllVehicule()
         );
     }
 
@@ -98,7 +99,8 @@ public class RouteOptimizationService {
             long[][] distanceMatrix,
             long[][] durationMatrix,
             List<Long> demands,
-            List<RouteStop> stops
+            List<RouteStop> stops,
+            boolean isUseAllVehicule
     ) {
 
         RoutingIndexManager manager = new RoutingIndexManager(
@@ -145,15 +147,18 @@ public class RouteOptimizationService {
                 demands,
                 stops,
                 vehicleCount,
-                vehicleCapacities
+                vehicleCapacities,
+                isUseAllVehicule
         );
 
-        List<RoutingModelDecorator> decorators = List.of(
+        List<RoutingModelDecorator> decorators = new ArrayList<>(List.of(
                 new DistanceDimensionDecorator(2_000_000L, 100),
                 new DurationDimensionDecorator(5 * 3600L),
-                new CapacityDimensionDecorator(),
-                new ForceVehicleUsageDecorator()
-        );
+                new CapacityDimensionDecorator()
+        ));
+        if (isUseAllVehicule) {
+            decorators.add(new ForceVehicleUsageDecorator());
+        }
 
         for (RoutingModelDecorator decorator : decorators) {
             decorator.decorate(context);

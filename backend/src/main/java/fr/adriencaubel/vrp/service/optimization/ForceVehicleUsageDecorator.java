@@ -4,6 +4,10 @@ public class ForceVehicleUsageDecorator implements RoutingModelDecorator {
 
     @Override
     public void decorate(RouteOptimizationContext context) {
+        if (!context.isUseAllVehicule()) {
+            return;
+        }
+
         for (int vehicleId = 0; vehicleId < context.vehicleCount(); vehicleId++) {
             long start = context.routing().start(vehicleId);
             long end = context.routing().end(vehicleId);

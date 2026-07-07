@@ -17,7 +17,8 @@ public record RouteOptimizationContext(
         List<Long> demands,
         List<RouteStop> stops,
         int vehicleCount,
-        long[] vehicleCapacities
+        long[] vehicleCapacities,
+        boolean isUseAllVehicule
 ) {
     public boolean hasCapacityConstraints() {
         return vehicleCapacities != null && vehicleCapacities.length > 0;

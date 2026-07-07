@@ -6,5 +6,6 @@ public record OptimizeRouteRequest(
         String depot,
         List<OptimizeRouteStopRequest> stops,
         int vehicleCount,
-        List<Integer> vehicleCapacities
+        List<Integer> vehicleCapacities,
+        boolean isUseAllVehicule
 ) {}

@@ -25,7 +25,6 @@ interface Props {
 function validate(
   pointsLen: number,
   startId: string | null,
-  endId: string | null,
   vehicles: number,
   vehicleCapacities: number[],
   capacityEnabled: boolean,
@@ -34,7 +33,6 @@ function validate(
   const errors: string[] = [];
   if (pointsLen < 2) errors.push("Add at least two delivery points.");
   if (!startId) errors.push("Select a start depot.");
-  if (!endId) errors.push("Select an end depot.");
   if (!Number.isInteger(vehicles) || vehicles < 1)
     errors.push("Vehicle count must be at least 1.");
   if (capacityEnabled) {
@@ -60,10 +58,8 @@ export function Sidebar({ result, onResult }: Props) {
   }, [planner.points]);
   const deliveryPoints = useMemo(
     () =>
-      planner.points.filter(
-        (p) => p.id !== planner.startPointId && p.id !== planner.endPointId,
-      ),
-    [planner.points, planner.startPointId, planner.endPointId],
+      planner.points.filter((p) => p.id !== planner.startPointId),
+    [planner.points, planner.startPointId],
   );
   const totalDemand = useMemo(
     () => deliveryPoints.reduce((sum, point) => sum + point.quantity, 0),
@@ -86,14 +82,12 @@ export function Sidebar({ result, onResult }: Props) {
     planner.points,
     planner.startPointId,
   );
-  const endDepotLabel = displayDepotLabel(planner.points, planner.endPointId);
 
   const errors = useMemo(
     () =>
       validate(
         planner.points.length,
         planner.startPointId,
-        planner.endPointId,
         planner.vehicles,
         planner.vehicleCapacities,
         planner.capacityEnabled,
@@ -102,7 +96,6 @@ export function Sidebar({ result, onResult }: Props) {
     [
       planner.points.length,
       planner.startPointId,
-      planner.endPointId,
       planner.vehicles,
       planner.vehicleCapacities,
       planner.capacityEnabled,
@@ -123,9 +116,7 @@ export function Sidebar({ result, onResult }: Props) {
     const req: BackendOptimizeRouteRequest = {
       depot: depot.address,
       stops: planner.points
-        .filter(
-          (p) => p.id !== planner.startPointId && p.id !== planner.endPointId,
-        )
+        .filter((p) => p.id !== planner.startPointId)
         .map((p) =>
           planner.capacityEnabled
             ? { address: p.address, quantity: p.quantity, stopType: p.stopType }
@@ -133,6 +124,7 @@ export function Sidebar({ result, onResult }: Props) {
         ),
       vehicleCount: planner.vehicles,
       vehicleCapacities: planner.capacityEnabled ? planner.vehicleCapacities : undefined,
+      isUseAllVehicule: planner.useAllVehicule,
     };
     try {
       const res = await optimize.mutateAsync(req);
@@ -160,7 +152,6 @@ export function Sidebar({ result, onResult }: Props) {
           <DeliveryList
             points={planner.points}
             startPointId={planner.startPointId}
-            endPointId={planner.endPointId}
             maxVehicleCapacity={maxVehicleCapacity}
             showDemand={planner.capacityEnabled}
             onUpdate={planner.updatePoint}
@@ -172,9 +163,10 @@ export function Sidebar({ result, onResult }: Props) {
           <DepotSelector
             points={planner.points}
             startPointId={planner.startPointId}
-            endPointId={planner.endPointId}
-            onStartChange={planner.setStartPointId}
-            onEndChange={planner.setEndPointId}
+            onStartChange={(id) => {
+              planner.setStartPointId(id);
+              planner.setEndPointId(id);
+            }}
           />
         </Section>
 
@@ -183,6 +175,18 @@ export function Sidebar({ result, onResult }: Props) {
             vehicles={planner.vehicles}
             onChange={planner.setVehicles}
           />
+          <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
+            <div>
+              <p className="text-sm font-medium text-foreground">Use all vehicles</p>
+              <p className="text-xs text-muted-foreground">
+                Force the solver to assign at least one stop to every vehicle.
+              </p>
+            </div>
+            <Switch
+              checked={planner.useAllVehicule}
+              onCheckedChange={planner.setUseAllVehicule}
+            />
+          </div>
           <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
             <div>
               <p className="text-sm font-medium text-foreground">Capacity constraints</p>
@@ -225,7 +229,6 @@ export function Sidebar({ result, onResult }: Props) {
               <SummaryRow label="Capacity mode" value="Off" />
             )}
             <SummaryRow label="Start depot" value={startDepotLabel} />
-            <SummaryRow label="End depot" value={endDepotLabel} />
           </dl>
         </Section>
 
