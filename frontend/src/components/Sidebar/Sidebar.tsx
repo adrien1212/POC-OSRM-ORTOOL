@@ -187,8 +187,16 @@ export function Sidebar({ result, onResult }: Props) {
         .filter((p) => p.id !== planner.startPointId)
         .map((p) =>
           planner.capacityEnabled
-            ? { address: p.address, quantity: p.quantity, stopType: p.stopType }
-            : { address: p.address },
+            ? {
+                address: p.address,
+                quantity: p.quantity,
+                stopType: p.stopType,
+                serviceDurationMinutes: p.serviceDurationMinutes,
+              }
+            : {
+                address: p.address,
+                serviceDurationMinutes: p.serviceDurationMinutes,
+              },
         ),
       vehicleCount: planner.vehicles,
       vehicleCapacities: planner.capacityEnabled ? planner.vehicleCapacities : undefined,
@@ -216,13 +224,20 @@ export function Sidebar({ result, onResult }: Props) {
     <aside className="flex h-full w-full flex-col overflow-y-auto border-r border-border bg-background">
       <div className="space-y-6 p-4">
         <Section title="Search address">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={planner.loadDemo}
               className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
             >
               Load demo
+            </button>
+            <button
+              type="button"
+              onClick={planner.loadShortDemo}
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+            >
+              Load 10-point demo
             </button>
           </div>
           <AddressSearch onSelect={planner.addPoint} />

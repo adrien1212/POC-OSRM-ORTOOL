@@ -57,6 +57,7 @@ public class RouteOptimizationService {
         List<Coordonees> coordonees = new ArrayList<>();
         List<RouteStop> stops = new ArrayList<>();
         List<Long> demands = new ArrayList<>();
+        List<Long> serviceDurations = new ArrayList<>();
 
         Coordonees depotCoordonnees = adresseToCoordonne(request.depot());
         coordonees.add(depotCoordonnees);
@@ -66,6 +67,7 @@ public class RouteOptimizationService {
                 depotCoordonnees.longitude()
         ));
         demands.add(0L);
+        serviceDurations.add(0L); // depot
 
         for(OptimizeRouteStopRequest stopRequest : request.stops()) {
             Coordonees stopCoordonnees = adresseToCoordonne(stopRequest.address());
@@ -76,6 +78,10 @@ public class RouteOptimizationService {
                     stopCoordonnees.longitude()
             ));
             demands.add(resolveSignedDemand(stopRequest));
+
+            serviceDurations.add(
+                    stopRequest.serviceDurationMinutes() * 60L
+            );
         }
 
         OSRMDTO osrmdto = distanceMatrix(coordonees);
@@ -87,6 +93,7 @@ public class RouteOptimizationService {
                 osrmdto.distances(),
                 osrmdto.durations(),
                 demands,
+                serviceDurations,
                 stops,
                 request.isUseAllVehicule(),
                 request.maximumDistance(),
@@ -102,6 +109,7 @@ public class RouteOptimizationService {
             long[][] distanceMatrix,
             long[][] durationMatrix,
             List<Long> demands,
+            List<Long> serviceDurations,
             List<RouteStop> stops,
             boolean isUseAllVehicule,
             int maximumDistance,
@@ -129,11 +137,12 @@ public class RouteOptimizationService {
             return distanceMatrix[fromNode][toNode];
         });
 
+
         int durationCallbackIndex = routing.registerTransitCallback((fromIndex, toIndex) -> {
             int fromNode = manager.indexToNode(fromIndex);
             int toNode = manager.indexToNode(toIndex);
 
-            return durationMatrix[fromNode][toNode];
+            return durationMatrix[fromNode][toNode] + serviceDurations.get(fromNode);
         });
 
         int demandCallbackIndex = routing.registerUnaryTransitCallback(fromIndex ->

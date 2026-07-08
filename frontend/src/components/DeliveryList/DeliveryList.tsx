@@ -51,6 +51,7 @@ export function DeliveryList({
     lng: "",
     quantity: "",
     stopType: "delivery" as StopType,
+    serviceDurationMinutes: "",
   });
 
   function startEdit(p: DeliveryPoint) {
@@ -61,6 +62,7 @@ export function DeliveryList({
       lng: String(p.longitude),
       quantity: String(p.quantity),
       stopType: p.stopType,
+      serviceDurationMinutes: String(p.serviceDurationMinutes ?? 0),
     });
   }
 
@@ -68,12 +70,17 @@ export function DeliveryList({
     const lat = Number(draft.lat);
     const lng = Number(draft.lng);
     const quantity = Number(draft.quantity);
+    const serviceDurationMinutes = Number(draft.serviceDurationMinutes);
     onUpdate(id, {
       address: draft.address.trim() || "Untitled",
       latitude: Number.isFinite(lat) ? lat : 0,
       longitude: Number.isFinite(lng) ? lng : 0,
       quantity: Number.isFinite(quantity) && quantity >= 0 ? Math.floor(quantity) : 0,
       stopType: draft.stopType,
+      serviceDurationMinutes:
+        Number.isFinite(serviceDurationMinutes) && serviceDurationMinutes >= 0
+          ? Math.floor(serviceDurationMinutes)
+          : 0,
     });
     setEditingId(null);
   }
@@ -174,6 +181,24 @@ export function DeliveryList({
                     </label>
                   </div>
                 )}
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                    Service time (min)
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={draft.serviceDurationMinutes}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        serviceDurationMinutes: e.target.value,
+                      }))
+                    }
+                    placeholder="0"
+                    className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                  />
+                </label>
                 <div className="flex justify-end gap-1">
                   <button
                     onClick={() => save(p.id)}
@@ -276,6 +301,25 @@ export function DeliveryList({
                       </label>
                     </div>
                   ) : null}
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                      Service time (min)
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={p.serviceDurationMinutes}
+                      onChange={(e) =>
+                        onUpdate(p.id, {
+                          serviceDurationMinutes: Math.max(
+                            0,
+                            Math.floor(Number(e.target.value) || 0),
+                          ),
+                        })
+                      }
+                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs outline-none transition-colors focus:ring-2 focus:ring-ring/30"
+                    />
+                  </label>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button

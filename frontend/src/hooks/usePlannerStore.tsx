@@ -17,7 +17,7 @@ const DEMO_LOCATIONS: Array<[string, string, number, number]> = [
   ["B", "Flavin", 2.6032, 44.2889],
   ["C", "Saint-Côme-d'Olt", 2.8140, 44.5150],
   ["D", "Estaing", 2.6710, 44.5540],
-  ["E", "Conques", 2.3970, 44.5990],
+  ["E", "Conques, 12330", 2.3970, 44.5990],
   ["F", "Valady", 2.4270, 44.4550],
   ["G", "Nauviale", 2.4260, 44.5200],
   ["H", "Firmi", 2.3100, 44.5400],
@@ -60,6 +60,27 @@ const DEMO_LOCATIONS: Array<[string, string, number, number]> = [
   ["AS", "Rabastens", 1.7250, 43.8220],
 ];
 
+const SHORT_DEMO_SERVICE_TIMES = [15, 10, 20, 5, 30, 12, 18, 8, 25];
+
+function buildDemoPoints(limit: number) {
+  return DEMO_LOCATIONS.slice(0, limit).map(([id, address, longitude, latitude], index) => {
+    const isDepot = index === 0;
+    const serviceDurationMinutes = isDepot
+      ? 0
+      : SHORT_DEMO_SERVICE_TIMES[index - 1] ?? 0;
+
+    return {
+      id: nextId(`demo-${id.toLowerCase()}`),
+      address,
+      latitude,
+      longitude,
+      quantity: isDepot ? 0 : 1,
+      stopType: "delivery" as const,
+      serviceDurationMinutes,
+    };
+  });
+}
+
 interface PlannerState {
   points: DeliveryPoint[];
   startPointId: string | null;
@@ -86,6 +107,7 @@ interface PlannerState {
   setOptimizationMode: (value: string) => void;
   setComputationTime: (value: number) => void;
   loadDemo: () => void;
+  loadShortDemo: () => void;
   setOptions: (patch: Partial<OptimizeOptions>) => void;
   setSelectedRouteId: (id: string | null) => void;
   setMaximumDistance:(v: number) => void
@@ -139,6 +161,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
             longitude: addr.longitude,
             quantity: prev.length === 0 ? 0 : 1,
             stopType: "delivery",
+            serviceDurationMinutes: 0,
           };
           const next = [...prev, point];
           // First point added becomes default depot (start + end).
@@ -189,19 +212,25 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       setMaximumDistance,
       setMaximumDuration,
       loadDemo: () => {
-        const demoPoints: DeliveryPoint[] = DEMO_LOCATIONS.map(([id, address, longitude, latitude]) => ({
-          id: nextId(`demo-${id.toLowerCase()}`),
-          address,
-          latitude,
-          longitude,
-          quantity: id === "Depot" ? 0 : 1,
-          stopType: "delivery",
-        }));
+        const demoPoints: DeliveryPoint[] = buildDemoPoints(DEMO_LOCATIONS.length);
         setPoints(demoPoints);
         setStartPointId(demoPoints[0]?.id ?? null);
         setEndPointId(demoPoints[0]?.id ?? null);
         setVehicles(8);
         setVehicleCapacities(Array.from({ length: 8 }, () => 20));
+        setCapacityEnabled(false);
+        setUseAllVehicule(false);
+        setOptimizationMode("distance");
+        setComputationTime(5);
+        setSelectedRouteId(null);
+      },
+      loadShortDemo: () => {
+        const demoPoints: DeliveryPoint[] = buildDemoPoints(10);
+        setPoints(demoPoints);
+        setStartPointId(demoPoints[0]?.id ?? null);
+        setEndPointId(demoPoints[0]?.id ?? null);
+        setVehicles(3);
+        setVehicleCapacities(Array.from({ length: 3 }, () => 20));
         setCapacityEnabled(false);
         setUseAllVehicule(false);
         setOptimizationMode("distance");

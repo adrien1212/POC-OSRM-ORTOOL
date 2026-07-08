@@ -5,6 +5,7 @@ export interface DeliveryPoint {
   longitude: number;
   quantity: number;
   stopType: StopType;
+  serviceDurationMinutes: number;
 }
 
 export interface AddressResult {
@@ -94,6 +95,7 @@ export interface BackendOptimizeRouteStopRequest {
   address: string;
   quantity?: number;
   stopType?: StopType;
+  serviceDurationMinutes?: number;
 }
 
 export interface BackendVehicleRoute {
