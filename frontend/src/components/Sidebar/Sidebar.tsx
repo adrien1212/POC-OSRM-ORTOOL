@@ -18,6 +18,7 @@ import { VehiclesConfig } from "./VehiclesConfig";
 import { AlertCircle, Loader2, RotateCcw, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "../ui/button";
 
 interface Props {
   result: OptimizeResponse | null;
@@ -469,6 +470,15 @@ export function Sidebar({ result, onResult }: Props) {
               selectedRouteId={planner.selectedRouteId}
               onSelectRoute={planner.setSelectedRouteId}
             />
+            <button 
+              type="button"
+              onClick={
+                () => planner.setSelectedRouteId(null)
+              }
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+              View all routes
+            </button>
           </Section>
         )}
       </div>
