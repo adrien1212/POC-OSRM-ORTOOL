@@ -80,6 +80,7 @@ export interface BackendOptimizeRouteRequest {
   vehicleCount: number;
   vehicleCapacities?: number[];
   isUseAllVehicule: boolean;
+  objective: "distance" | "duration";
   maximumDistance: number;
   maximumDuration: number;
   computationTime: number;

@@ -202,6 +202,7 @@ export function Sidebar({ result, onResult }: Props) {
       vehicleCount: planner.vehicles,
       vehicleCapacities: planner.capacityEnabled ? planner.vehicleCapacities : undefined,
       isUseAllVehicule: planner.useAllVehicule,
+      objective: planner.optimizationMode === "duration" ? "duration" : "distance",
       maximumDistance: planner.maximumDistance,
       maximumDuration: planner.maximumDuration,
       computationTime: planner.computationTime,
@@ -267,7 +268,7 @@ export function Sidebar({ result, onResult }: Props) {
         </Section>
 
         <Section title="Settings">
-{/*           <div className="space-y-3 rounded-xl border border-border bg-card p-3">
+          <div className="space-y-3 rounded-xl border border-border bg-card p-3">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-foreground">
@@ -296,7 +297,7 @@ export function Sidebar({ result, onResult }: Props) {
                 subtitle="Best for fastest route"
               />
             </div>
-          </div> */}
+          </div>
 
           <NumberConfig
             title={"Maximum distance (km)"}

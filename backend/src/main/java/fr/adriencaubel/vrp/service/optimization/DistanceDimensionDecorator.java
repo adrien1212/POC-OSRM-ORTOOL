@@ -23,6 +23,8 @@ public class DistanceDimensionDecorator implements RoutingModelDecorator {
         );
 
         RoutingDimension distanceDimension = context.routing().getDimensionOrDie("Distance");
-        distanceDimension.setGlobalSpanCostCoefficient(globalSpanCostCoefficient);
+        if (globalSpanCostCoefficient > 0) {
+            distanceDimension.setGlobalSpanCostCoefficient(globalSpanCostCoefficient);
+        }
     }
 }

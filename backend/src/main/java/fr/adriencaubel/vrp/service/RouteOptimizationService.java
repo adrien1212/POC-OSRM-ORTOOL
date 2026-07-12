@@ -35,6 +35,12 @@ public class RouteOptimizationService {
     public static final Logger logger = LoggerFactory.getLogger(RouteOptimizationService.class);
 
     private static final String OSRM_BASE_URL = System.getenv().getOrDefault("OSRM_BASE_URL", "http://127.0.0.1:5001");
+    private static final int BALANCE_SPAN_COST_COEFFICIENT = 100;
+
+    private enum Objective {
+        DISTANCE,
+        DURATION
+    }
 
     public OptimizeRouteResponse optimize(OptimizeRouteRequest request) {
         if (request.stops() == null || request.stops().isEmpty()) {
@@ -61,10 +67,12 @@ public class RouteOptimizationService {
 
         Coordonees depotCoordonnees = adresseToCoordonne(request.depot());
         coordonees.add(depotCoordonnees);
+        // depot
         stops.add(new RouteStop(
                 request.depot(),
                 depotCoordonnees.latitude(),
-                depotCoordonnees.longitude()
+                depotCoordonnees.longitude(),
+                0
         ));
         demands.add(0L);
         serviceDurations.add(0L); // depot
@@ -75,7 +83,8 @@ public class RouteOptimizationService {
             stops.add(new RouteStop(
                     stopRequest.address(),
                     stopCoordonnees.latitude(),
-                    stopCoordonnees.longitude()
+                    stopCoordonnees.longitude(),
+                    stopRequest.serviceDurationMinutes()
             ));
             demands.add(resolveSignedDemand(stopRequest));
 
@@ -96,6 +105,7 @@ public class RouteOptimizationService {
                 serviceDurations,
                 stops,
                 request.isUseAllVehicule(),
+                resolveObjective(request.objective()),
                 request.maximumDistance(),
                 request.maximumDuration(),
                 request.computationTime()
@@ -112,6 +122,7 @@ public class RouteOptimizationService {
             List<Long> serviceDurations,
             List<RouteStop> stops,
             boolean isUseAllVehicule,
+            Objective objective,
             int maximumDistance,
             int maximumDuration,
             int computationTime
@@ -149,7 +160,14 @@ public class RouteOptimizationService {
                 demands.get(manager.indexToNode(fromIndex))
         );
 
-        routing.setArcCostEvaluatorOfAllVehicles(transitCallbackIndex);
+        int arcCostEvaluatorIndex = objective == Objective.DURATION
+                ? durationCallbackIndex
+                : transitCallbackIndex;
+        routing.setArcCostEvaluatorOfAllVehicles(arcCostEvaluatorIndex);
+
+        // Permet de faire priorisation par duration ou pas distance
+        int distanceSpanCostCoefficient = objective == Objective.DISTANCE ? BALANCE_SPAN_COST_COEFFICIENT : 0;
+        int durationSpanCostCoefficient = objective == Objective.DURATION ? BALANCE_SPAN_COST_COEFFICIENT : 0;
 
         RouteOptimizationContext context = new RouteOptimizationContext(
                 manager,
@@ -167,8 +185,8 @@ public class RouteOptimizationService {
         );
 
         List<RoutingModelDecorator> decorators = new ArrayList<>(List.of(
-                new DistanceDimensionDecorator(maximumDistance * 1000L, 100),
-                new DurationDimensionDecorator(maximumDuration * 3600L),
+                new DistanceDimensionDecorator(maximumDistance * 1000L, distanceSpanCostCoefficient),
+                new DurationDimensionDecorator(maximumDuration * 3600L, durationSpanCostCoefficient),
                 new CapacityDimensionDecorator()
         ));
         if (isUseAllVehicule) {
@@ -194,6 +212,19 @@ public class RouteOptimizationService {
         }
 
         return printSolution(routing, manager, solution, vehicleCount, stops, vehicleCapacities != null);
+    }
+
+    private Objective resolveObjective(String objective) {
+        if (objective == null || objective.isBlank()) {
+            return Objective.DISTANCE;
+        }
+        return switch (objective.trim().toLowerCase()) {
+            case "duration", "minimize_duration" -> Objective.DURATION;
+            case "distance", "minimize_distance" -> Objective.DISTANCE;
+            default -> throw new IllegalArgumentException(
+                    "Unknown objective: " + objective + " (expected distance or duration)"
+            );
+        };
     }
 
     private long[] resolveVehicleCapacities(OptimizeRouteRequest request) {

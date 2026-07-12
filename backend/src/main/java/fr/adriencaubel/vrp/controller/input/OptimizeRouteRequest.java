@@ -8,6 +8,7 @@ public record OptimizeRouteRequest(
         int vehicleCount,
         List<Integer> vehicleCapacities,
         boolean isUseAllVehicule,
+        String objective,
         int maximumDistance,
         int maximumDuration,
         int computationTime

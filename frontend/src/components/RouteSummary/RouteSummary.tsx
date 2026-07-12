@@ -116,7 +116,10 @@ export function RouteSummary({
                   {route.stops.map((s, i) => (
                     <span key={s.sequence} className="flex items-center gap-1">
                       <span className="truncate rounded bg-secondary px-1.5 py-0.5 text-secondary-foreground">
-                        {pointById.get(s.pointId)?.address.split(",")[0] ?? s.pointId}
+                        {pointById.get(s.pointId)?.address.split(",")[0] ?? s.pointId} 
+                        {(pointById.get(s.pointId)?.serviceDurationMinutes ?? 0) > 0 && (
+                          <> ({pointById.get(s.pointId)?.serviceDurationMinutes})</>
+                        )}
                       </span>
                       {i < route.stops.length - 1 && <span>→</span>}
                     </span>
