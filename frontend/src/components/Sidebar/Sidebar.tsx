@@ -62,8 +62,7 @@ export function Sidebar({ result, onResult }: Props) {
     return new Map(planner.points.map((p) => [p.address, p] as const));
   }, [planner.points]);
   const deliveryPoints = useMemo(
-    () =>
-      planner.points.filter((p) => p.id !== planner.startPointId),
+    () => planner.points.filter((p) => p.id !== planner.startPointId),
     [planner.points, planner.startPointId],
   );
   const totalDemand = useMemo(
@@ -71,12 +70,12 @@ export function Sidebar({ result, onResult }: Props) {
     [deliveryPoints],
   );
   const maxStopDemand = useMemo(
-    () => deliveryPoints.reduce((max, point) => Math.max(max, point.quantity), 0),
+    () =>
+      deliveryPoints.reduce((max, point) => Math.max(max, point.quantity), 0),
     [deliveryPoints],
   );
   const totalCapacity = useMemo(
-    () =>
-      planner.vehicleCapacities.reduce((sum, cap) => sum + cap, 0),
+    () => planner.vehicleCapacities.reduce((sum, cap) => sum + cap, 0),
     [planner.vehicleCapacities],
   );
   const maxVehicleCapacity = useMemo(
@@ -145,7 +144,10 @@ export function Sidebar({ result, onResult }: Props) {
               : current < 75
                 ? 2 + Math.random() * 2.5
                 : 1 + Math.random() * 1.5;
-        return Math.min(95, current + Math.max(jump, remaining > 0 ? remaining * 0.18 : 0));
+        return Math.min(
+          95,
+          current + Math.max(jump, remaining > 0 ? remaining * 0.18 : 0),
+        );
       });
 
       const elapsedAfterStep = performance.now() - start;
@@ -200,9 +202,12 @@ export function Sidebar({ result, onResult }: Props) {
               },
         ),
       vehicleCount: planner.vehicles,
-      vehicleCapacities: planner.capacityEnabled ? planner.vehicleCapacities : undefined,
+      vehicleCapacities: planner.capacityEnabled
+        ? planner.vehicleCapacities
+        : undefined,
       isUseAllVehicule: planner.useAllVehicule,
-      objective: planner.optimizationMode === "duration" ? "duration" : "distance",
+      objective:
+        planner.optimizationMode === "duration" ? "duration" : "distance",
       maximumDistance: planner.maximumDistance,
       maximumDuration: planner.maximumDuration,
       computationTime: planner.computationTime,
@@ -275,11 +280,14 @@ export function Sidebar({ result, onResult }: Props) {
                   Optimization objective
                 </p>
                 <p className="text-xs leading-5 text-muted-foreground">
-                  Choose whether the solver should favor shorter distance or shorter duration.
+                  Choose whether the solver should favor shorter distance or
+                  shorter duration.
                 </p>
               </div>
               <span className="rounded-full bg-secondary px-2 py-1 text-[11px] font-medium text-secondary-foreground">
-                {planner.optimizationMode === "duration" ? "Duration" : "Distance"}
+                {planner.optimizationMode === "duration"
+                  ? "Duration"
+                  : "Distance"}
               </span>
             </div>
 
@@ -310,8 +318,6 @@ export function Sidebar({ result, onResult }: Props) {
             quantity={planner.maximumDuration}
             onChange={planner.setMaximumDuration}
           />
-
-
 
           <div className="space-y-3 rounded-xl border border-border bg-card p-3">
             <div className="flex items-start justify-between gap-4">
@@ -345,7 +351,6 @@ export function Sidebar({ result, onResult }: Props) {
           </div>
         </Section>
 
-
         <Section title="Fleet">
           <NumberConfig
             title={"Vehicules"}
@@ -354,7 +359,9 @@ export function Sidebar({ result, onResult }: Props) {
           />
           <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5">
             <div>
-              <p className="text-sm font-medium text-foreground">Use all vehicles</p>
+              <p className="text-sm font-medium text-foreground">
+                Use all vehicles
+              </p>
               <p className="text-xs text-muted-foreground">
                 Force the solver to assign at least one stop to every vehicle.
               </p>
@@ -366,7 +373,9 @@ export function Sidebar({ result, onResult }: Props) {
           </div>
           <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5">
             <div>
-              <p className="text-sm font-medium text-foreground">Capacity constraints</p>
+              <p className="text-sm font-medium text-foreground">
+                Capacity constraints
+              </p>
               <p className="text-xs text-muted-foreground">
                 Enable demand and vehicle capacity checks.
               </p>
@@ -471,13 +480,11 @@ export function Sidebar({ result, onResult }: Props) {
               selectedRouteId={planner.selectedRouteId}
               onSelectRoute={planner.setSelectedRouteId}
             />
-            <button 
+            <button
               type="button"
-              onClick={
-                () => planner.setSelectedRouteId(null)
-              }
+              onClick={() => planner.setSelectedRouteId(null)}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
+            >
               View all routes
             </button>
           </Section>

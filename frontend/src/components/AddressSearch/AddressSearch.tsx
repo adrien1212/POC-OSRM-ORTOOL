@@ -68,7 +68,9 @@ export function AddressSearch({ onSelect }: Props) {
       {open && debounced.trim().length > 1 && (
         <div className="absolute z-[1100] mt-1 max-h-72 w-full overflow-auto rounded-lg border border-border bg-popover p-1 shadow-lg">
           {results.length === 0 && !isFetching && (
-            <p className="px-3 py-2 text-sm text-muted-foreground">No results</p>
+            <p className="px-3 py-2 text-sm text-muted-foreground">
+              No results
+            </p>
           )}
           {results.map((r) => (
             <button

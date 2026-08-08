@@ -14,12 +14,21 @@ cartoenv/
 .ipynb_checkpoints/
 .jupyter/
 
-# OSRM generated artifacts
+# OSM extracts and OSRM generated artifacts (see scripts/fetch-osm.sh)
+data/
 *.osrm*
 *.osm.pbf
 
 # Generated output
 vrp_routes.html
+
+# Local configuration — commit the .example files instead
+.env
+.env.local
+!.env.example
+!*.env.example
+# frontend/.env.production is build configuration, not local config — it holds
+# the relative paths the production image is built with, and is tracked.
 
 # OS and editor files
 .DS_Store
@@ -27,6 +36,13 @@ Thumbs.db
 .idea/
 .vscode/
 
+.claude/*
+CLAUDE.md
+docker-compose.prod.yml
+openspec/*
 
 frontend/node_modules/
 frontend/.output
+frontend/dist/
+frontend/.nitro
+frontend/.tanstack

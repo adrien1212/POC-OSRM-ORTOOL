@@ -52,7 +52,9 @@ export function RouteSummary({
 
   return (
     <div className="space-y-3">
-      <div className={`grid grid-cols-2 gap-2 ${showCapacity ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+      <div
+        className={`grid grid-cols-2 gap-2 ${showCapacity ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
+      >
         <Stat
           icon={<RouteIcon className="h-3.5 w-3.5" />}
           label="Total distance"
@@ -86,8 +88,7 @@ export function RouteSummary({
         {result.routes.map((route, idx) => {
           const color = routeColor(idx);
           const selected = selectedRouteId === route.vehicleId;
-          const capacity =
-            vehicleCapacities[Number(route.vehicleId)] ?? 20;
+          const capacity = vehicleCapacities[Number(route.vehicleId)] ?? 20;
           return (
             <li key={route.vehicleId}>
               <button
@@ -116,9 +117,14 @@ export function RouteSummary({
                   {route.stops.map((s, i) => (
                     <span key={s.sequence} className="flex items-center gap-1">
                       <span className="truncate rounded bg-secondary px-1.5 py-0.5 text-secondary-foreground">
-                        {pointById.get(s.pointId)?.address.split(",")[0] ?? s.pointId} 
-                        {(pointById.get(s.pointId)?.serviceDurationMinutes ?? 0) > 0 && (
-                          <> ({pointById.get(s.pointId)?.serviceDurationMinutes})</>
+                        {pointById.get(s.pointId)?.address.split(",")[0] ??
+                          s.pointId}
+                        {(pointById.get(s.pointId)?.serviceDurationMinutes ??
+                          0) > 0 && (
+                          <>
+                            {" "}
+                            ({pointById.get(s.pointId)?.serviceDurationMinutes})
+                          </>
                         )}
                       </span>
                       {i < route.stops.length - 1 && <span>→</span>}
