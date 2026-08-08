@@ -1,9 +1,11 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import type {
-  AddressResult,
-  DeliveryPoint,
-  OptimizeOptions,
-} from "@/types";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import type { AddressResult, DeliveryPoint, OptimizeOptions } from "@/types";
 
 let counter = 0;
 function nextId(prefix: string) {
@@ -15,70 +17,72 @@ const DEMO_LOCATIONS: Array<[string, string, number, number]> = [
   ["Depot", "Rodez", 2.5734, 44.3526],
   ["A", "Baraqueville", 2.4318, 44.2766],
   ["B", "Flavin", 2.6032, 44.2889],
-  ["C", "Saint-Côme-d'Olt", 2.8140, 44.5150],
-  ["D", "Estaing", 2.6710, 44.5540],
-  ["E", "Conques, 12330", 2.3970, 44.5990],
-  ["F", "Valady", 2.4270, 44.4550],
-  ["G", "Nauviale", 2.4260, 44.5200],
-  ["H", "Firmi", 2.3100, 44.5400],
-  ["I", "Cransac", 2.2840, 44.5250],
-  ["J", "Balsac", 2.4450, 44.4010],
-  ["K", "Villefranche-de-Rouergue", 2.0370, 44.3510],
-  ["L", "Espalion", 2.7570, 44.5210],
-  ["M", "Bozouls", 2.7240, 44.4700],
-  ["N", "Laguiole", 2.8460, 44.6840],
-  ["O", "Sévérac-d'Aveyron", 3.0520, 44.3230],
-  ["P", "Millau", 3.0810, 44.1000],
-  ["Q", "Saint-Affrique", 2.8850, 43.9580],
-  ["R", "Pont-de-Salars", 2.7280, 44.2820],
-  ["S", "Salles-Curan", 2.7880, 44.1820],
-  ["T", "Réquista", 2.5350, 44.0330],
-  ["U", "Decazeville", 2.2510, 44.5600],
-  ["V", "Aubin", 2.2430, 44.5270],
-  ["W", "Marcillac-Vallon", 2.4650, 44.4750],
-  ["X", "Laissac", 2.6830, 44.3830],
-  ["Y", "Rieupeyroux", 2.2360, 44.3050],
-  ["Z", "Figeac", 2.0340, 44.6080],
-  ["AA", "Cahors", 1.4410, 44.4490],
-  ["AB", "Gourdon", 1.3820, 44.7360],
-  ["AC", "Gramat", 1.7220, 44.7770],
-  ["AD", "Saint-Céré", 1.8920, 44.8570],
-  ["AE", "Souillac", 1.4730, 44.8960],
-  ["AF", "Lacapelle-Marival", 1.9240, 44.7280],
-  ["AG", "Limogne-en-Quercy", 1.7710, 44.3960],
-  ["AH", "Puy-l'Évêque", 1.1370, 44.5040],
-  ["AI", "Castelnau-Montratier", 1.3550, 44.2690],
-  ["AJ", "Albi", 2.1480, 43.9280],
-  ["AK", "Gaillac", 1.8970, 43.9020],
-  ["AL", "Carmaux", 2.1580, 44.0490],
-  ["AM", "Cordes-sur-Ciel", 1.9540, 44.0640],
-  ["AN", "Graulhet", 1.9890, 43.7650],
-  ["AO", "Lavaur", 1.8120, 43.6990],
-  ["AP", "Castres", 2.2400, 43.6060],
-  ["AQ", "Mazamet", 2.3720, 43.4920],
-  ["AR", "Lisle-sur-Tarn", 1.8120, 43.8520],
-  ["AS", "Rabastens", 1.7250, 43.8220],
+  ["C", "Saint-Côme-d'Olt", 2.814, 44.515],
+  ["D", "Estaing", 2.671, 44.554],
+  ["E", "Conques, 12330", 2.397, 44.599],
+  ["F", "Valady", 2.427, 44.455],
+  ["G", "Nauviale", 2.426, 44.52],
+  ["H", "Firmi", 2.31, 44.54],
+  ["I", "Cransac", 2.284, 44.525],
+  ["J", "Balsac", 2.445, 44.401],
+  ["K", "Villefranche-de-Rouergue", 2.037, 44.351],
+  ["L", "Espalion", 2.757, 44.521],
+  ["M", "Bozouls", 2.724, 44.47],
+  ["N", "Laguiole", 2.846, 44.684],
+  ["O", "Sévérac-d'Aveyron", 3.052, 44.323],
+  ["P", "Millau", 3.081, 44.1],
+  ["Q", "Saint-Affrique", 2.885, 43.958],
+  ["R", "Pont-de-Salars", 2.728, 44.282],
+  ["S", "Salles-Curan", 2.788, 44.182],
+  ["T", "Réquista", 2.535, 44.033],
+  ["U", "Decazeville", 2.251, 44.56],
+  ["V", "Aubin", 2.243, 44.527],
+  ["W", "Marcillac-Vallon", 2.465, 44.475],
+  ["X", "Laissac", 2.683, 44.383],
+  ["Y", "Rieupeyroux", 2.236, 44.305],
+  ["Z", "Figeac", 2.034, 44.608],
+  ["AA", "Cahors", 1.441, 44.449],
+  ["AB", "Gourdon", 1.382, 44.736],
+  ["AC", "Gramat", 1.722, 44.777],
+  ["AD", "Saint-Céré", 1.892, 44.857],
+  ["AE", "Souillac", 1.473, 44.896],
+  ["AF", "Lacapelle-Marival", 1.924, 44.728],
+  ["AG", "Limogne-en-Quercy", 1.771, 44.396],
+  ["AH", "Puy-l'Évêque", 1.137, 44.504],
+  ["AI", "Castelnau-Montratier", 1.355, 44.269],
+  ["AJ", "Albi", 2.148, 43.928],
+  ["AK", "Gaillac", 1.897, 43.902],
+  ["AL", "Carmaux", 2.158, 44.049],
+  ["AM", "Cordes-sur-Ciel", 1.954, 44.064],
+  ["AN", "Graulhet", 1.989, 43.765],
+  ["AO", "Lavaur", 1.812, 43.699],
+  ["AP", "Castres", 2.24, 43.606],
+  ["AQ", "Mazamet", 2.372, 43.492],
+  ["AR", "Lisle-sur-Tarn", 1.812, 43.852],
+  ["AS", "Rabastens", 1.725, 43.822],
 ];
 
 const SHORT_DEMO_SERVICE_TIMES = [15, 10, 20, 5, 30, 12, 18, 8, 25];
 
 function buildDemoPoints(limit: number) {
-  return DEMO_LOCATIONS.slice(0, limit).map(([id, address, longitude, latitude], index) => {
-    const isDepot = index === 0;
-    const serviceDurationMinutes = isDepot
-      ? 0
-      : SHORT_DEMO_SERVICE_TIMES[index - 1] ?? 0;
+  return DEMO_LOCATIONS.slice(0, limit).map(
+    ([id, address, longitude, latitude], index) => {
+      const isDepot = index === 0;
+      const serviceDurationMinutes = isDepot
+        ? 0
+        : (SHORT_DEMO_SERVICE_TIMES[index - 1] ?? 0);
 
-    return {
-      id: nextId(`demo-${id.toLowerCase()}`),
-      address,
-      latitude,
-      longitude,
-      quantity: isDepot ? 0 : 1,
-      stopType: "delivery" as const,
-      serviceDurationMinutes,
-    };
-  });
+      return {
+        id: nextId(`demo-${id.toLowerCase()}`),
+        address,
+        latitude,
+        longitude,
+        quantity: isDepot ? 0 : 1,
+        stopType: "delivery" as const,
+        serviceDurationMinutes,
+      };
+    },
+  );
 }
 
 interface PlannerState {
@@ -110,8 +114,8 @@ interface PlannerState {
   loadShortDemo: () => void;
   setOptions: (patch: Partial<OptimizeOptions>) => void;
   setSelectedRouteId: (id: string | null) => void;
-  setMaximumDistance:(v: number) => void
-  setMaximumDuration:(v: number) => void
+  setMaximumDistance: (v: number) => void;
+  setMaximumDuration: (v: number) => void;
 }
 
 const PlannerContext = createContext<PlannerState | null>(null);
@@ -212,7 +216,9 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       setMaximumDistance,
       setMaximumDuration,
       loadDemo: () => {
-        const demoPoints: DeliveryPoint[] = buildDemoPoints(DEMO_LOCATIONS.length);
+        const demoPoints: DeliveryPoint[] = buildDemoPoints(
+          DEMO_LOCATIONS.length,
+        );
         setPoints(demoPoints);
         setStartPointId(demoPoints[0]?.id ?? null);
         setEndPointId(demoPoints[0]?.id ?? null);
@@ -256,7 +262,9 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
     selectedRouteId,
   ]);
 
-  return <PlannerContext.Provider value={value}>{children}</PlannerContext.Provider>;
+  return (
+    <PlannerContext.Provider value={value}>{children}</PlannerContext.Provider>
+  );
 }
 
 export function usePlanner() {

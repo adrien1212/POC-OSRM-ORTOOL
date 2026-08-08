@@ -75,7 +75,8 @@ export function DeliveryList({
       address: draft.address.trim() || "Untitled",
       latitude: Number.isFinite(lat) ? lat : 0,
       longitude: Number.isFinite(lng) ? lng : 0,
-      quantity: Number.isFinite(quantity) && quantity >= 0 ? Math.floor(quantity) : 0,
+      quantity:
+        Number.isFinite(quantity) && quantity >= 0 ? Math.floor(quantity) : 0,
       stopType: draft.stopType,
       serviceDurationMinutes:
         Number.isFinite(serviceDurationMinutes) && serviceDurationMinutes >= 0
@@ -103,7 +104,8 @@ export function DeliveryList({
         const editing = editingId === p.id;
         const isDepot = p.id === startPointId;
         const oversizedDemand = showDemand && p.quantity > maxVehicleCapacity;
-        const typeBadge = showDemand && !isDepot ? stopTypeBadge(p.stopType) : null;
+        const typeBadge =
+          showDemand && !isDepot ? stopTypeBadge(p.stopType) : null;
 
         return (
           <li
@@ -114,19 +116,25 @@ export function DeliveryList({
               <div className="space-y-2">
                 <input
                   value={draft.address}
-                  onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, address: e.target.value }))
+                  }
                   className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
                 />
                 <div className="flex gap-2">
                   <input
                     value={draft.lat}
-                    onChange={(e) => setDraft((d) => ({ ...d, lat: e.target.value }))}
+                    onChange={(e) =>
+                      setDraft((d) => ({ ...d, lat: e.target.value }))
+                    }
                     placeholder="lat"
                     className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
                   />
                   <input
                     value={draft.lng}
-                    onChange={(e) => setDraft((d) => ({ ...d, lng: e.target.value }))}
+                    onChange={(e) =>
+                      setDraft((d) => ({ ...d, lng: e.target.value }))
+                    }
                     placeholder="lng"
                     className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
                   />
@@ -225,12 +233,16 @@ export function DeliveryList({
                       {p.address}
                     </p>
                     {b && (
-                      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${b.cls}`}>
+                      <span
+                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${b.cls}`}
+                      >
                         {b.label}
                       </span>
                     )}
                     {typeBadge && (
-                      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${typeBadge.cls}`}>
+                      <span
+                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${typeBadge.cls}`}
+                      >
                         {typeBadge.label}
                       </span>
                     )}

@@ -11,7 +11,10 @@ export function CapacityConfig({
   vehicleCapacities,
   onVehicleCapacityChange,
 }: Props) {
-  const totalCapacity = vehicleCapacities.reduce((sum, value) => sum + value, 0);
+  const totalCapacity = vehicleCapacities.reduce(
+    (sum, value) => sum + value,
+    0,
+  );
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-card p-3">
@@ -56,9 +59,7 @@ export function CapacityConfig({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span>
-          New vehicles inherit the previous capacity value.
-        </span>
+        <span>New vehicles inherit the previous capacity value.</span>
         <span className="hidden sm:inline">•</span>
         <span>Overrides are sent to the backend per vehicle.</span>
       </div>
