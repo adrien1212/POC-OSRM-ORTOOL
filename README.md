@@ -3,9 +3,10 @@
 Place delivery points on a map, set your fleet, and get optimized tours on real roads.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![CI](https://github.com/adrien1212/POC-OSRM-ORTOOL/actions/workflows/ci.yml/badge.svg)](https://github.com/adrien1212/POC-OSRM-ORTOOL/actions/workflows/ci.yml)
+[![CI](git clone https://github.com/adrien1212/vehicle-routing-planner
+/actions/workflows/ci.yml/badge.svg)](https://github.com/adrien1212/POC-OSRM-ORTOOL/actions/workflows/ci.yml)
 
-### ▶ [Try the live demo](https://carto.traino.tech) — no install required
+### ▶ [Try the live demo](https://carto.traino.tech)
 
 A solver for the **Vehicle Routing Problem**: given a depot, a set of stops and a fleet of vehicles,
 it decides who visits what and in which order. Distances and durations come from real road routing
@@ -29,8 +30,8 @@ OpenStreetMap extract.
 You need **Docker** (with Compose) and about 2 GB of free disk.
 
 ```bash
-git clone https://github.com/adrien1212/POC-OSRM-ORTOOL.git
-cd POC-OSRM-ORTOOL
+git clone https://github.com/adrien1212/vehicle-routing-planner
+cd vehicle-routing-planner
 ./scripts/fetch-osm.sh     # downloads the Aveyron OSM extract (~64 MB) into data/
 docker compose up
 ```
@@ -79,8 +80,8 @@ frontend (React + Leaflet)          backend (Spring Boot + OR-Tools)         OSR
 - **`backend/`** — Java 25 / Spring Boot 4.1 (Maven), port 8012. `RouteOptimizationService`
   orchestrates: fetch the OSRM matrix, build the OR-Tools model, solve, map to the response.
 - **`frontend/`** — React 19 / TanStack Start / Vite / Tailwind / shadcn-ui / Leaflet, built with
-  **bun**. State lives in `hooks/usePlannerStore.tsx`.
-- **OSRM** — the routing engine, run as a container from an OpenStreetMap extract.
+- **OSRM** — the routing engine, run as a container from an OpenStreetMap extract. Give the Distance/duration matrix
+- **OR-Tools** - the Vehicle Routing Solver with constraint. It assigns stops to vehicles and orders them
 - **`prototype/`** — the original Python/OR-Tools/Folium notebook, [kept for reference](./prototype/README.md).
 
 ### Adding a routing constraint
