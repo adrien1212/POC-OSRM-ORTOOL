@@ -1,0 +1,67 @@
+# Deployed stack: pulls pre-built images from GHCR instead of building locally.
+# Used by .github/workflows/deploy.yml, which copies this file to the server and
+# runs:
+#
+#   TAG=<git tag> docker compose -f docker-compose.prod.yml up -d
+#
+# The server needs the OpenStreetMap extract at ./data/$OSM_FILE (see
+# scripts/fetch-osm.sh) and a .env alongside this file setting TAG's companions:
+# OSM_FILE and APP_CORS_ALLOWED_ORIGINS.
+
+services:
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend
+    restart: unless-stopped
+    environment:
+      OSM_FILE: ${OSM_FILE:-midi-pyrenees-latest.osm.pbf}
+    command:
+      - sh
+      - -lc
+      - |
+        set -e
+        BASE="$${OSM_FILE%.osm.pbf}"
+        if [ ! -f "/input/$$OSM_FILE" ]; then
+          echo "Missing /input/$$OSM_FILE — run ./scripts/fetch-osm.sh first." >&2
+          exit 1
+        fi
+        cp "/input/$$OSM_FILE" "/data/$$OSM_FILE"
+        # .osrm.mldgr is the last file osrm-customize writes — OSRM never creates
+        # a bare .osrm, so testing for that would rebuild the graph every start.
+        if [ ! -f "/data/$$BASE.osrm.mldgr" ]; then
+          osrm-extract -p /opt/car.lua "/data/$$OSM_FILE"
+          osrm-partition "/data/$$BASE.osrm"
+          osrm-customize "/data/$$BASE.osrm"
+        fi
+        exec osrm-routed --algorithm mld "/data/$$BASE.osrm"
+    healthcheck:
+      test: ["CMD-SHELL", 'test -f "/data/$${OSM_FILE%.osm.pbf}.osrm.mldgr"']
+      interval: 10s
+      timeout: 5s
+      retries: 60
+    volumes:
+      - ./data:/input:ro
+      - osrm_data:/data
+
+  backend:
+    image: ghcr.io/${GHCR_OWNER:-adrien1212}/carto/backend:${TAG:?set TAG to the released version}
+    restart: unless-stopped
+    environment:
+      OSRM_BASE_URL: http://osrm:5000
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:*}
+    ports:
+      - "8012:8012"
+    depends_on:
+      osrm:
+        condition: service_healthy
+
+  frontend:
+    image: ghcr.io/${GHCR_OWNER:-adrien1212}/carto/frontend:${TAG:?set TAG to the released version}
+    restart: unless-stopped
+    ports:
+      - "8013:3000"
+    depends_on:
+      - backend
+      - osrm
+
+volumes:
+  osrm_data:
