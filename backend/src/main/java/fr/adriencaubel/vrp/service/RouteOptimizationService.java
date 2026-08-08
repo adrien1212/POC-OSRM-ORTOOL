@@ -264,6 +264,9 @@ public class RouteOptimizationService {
         logger.info("Objective: " + solution.objectiveValue());
 
         long totalDistance = 0;
+        // Read each total from its own dimension: the arc cost follows the requested objective,
+        // so it reports seconds when optimizing duration.
+        RoutingDimension distanceDimension = routing.getDimensionOrDie("Distance");
         RoutingDimension durationDimension = routing.getDimensionOrDie("Duration");
         RoutingDimension capacityDimension = hasCapacityDimension
                 ? routing.getDimensionOrDie("Capacity")
@@ -290,16 +293,8 @@ public class RouteOptimizationService {
                 route.append(nodeIndex).append(" -> ");
                 vehicleStops.add(stops.get(nodeIndex));
 
-                long previousIndex = index;
                 index = solution.value(routing.nextVar(index));
 
-                routeDistance += routing.getArcCostForVehicle(
-                        previousIndex,
-                        index,
-                        vehicleId
-                );
-
-                routeDuration = solution.value(durationDimension.cumulVar(index));
                 if (capacityDimension != null) {
                     routePeakLoad = Math.max(routePeakLoad, solution.value(capacityDimension.cumulVar(index)));
                 }
@@ -308,6 +303,11 @@ public class RouteOptimizationService {
             int endNodeIndex = manager.indexToNode(index);
             route.append(endNodeIndex);
             vehicleStops.add(stops.get(endNodeIndex));
+
+            // Cumulated values at the end node = totals for the whole route.
+            routeDistance = solution.value(distanceDimension.cumulVar(index));
+            routeDuration = solution.value(durationDimension.cumulVar(index));
+
             if (capacityDimension != null) {
                 routePeakLoad = Math.max(routePeakLoad, solution.value(capacityDimension.cumulVar(index)));
                 routeLoad = routePeakLoad;

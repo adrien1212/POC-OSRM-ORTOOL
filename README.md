@@ -101,22 +101,39 @@ POST /api/v1/routes/optimize
 Content-Type: application/json
 ```
 
+### Request
 ```json
 {
-  "depot": "Rodez",
+  "depot": "1 rue du Terral, 12000 Rodez",
   "stops": [
-    { "address": "Flavin", "quantity": 3, "stopType": "DELIVERY", "serviceDurationMinutes": 10 },
-    { "address": "Baraqueville", "quantity": 5, "stopType": "DELIVERY", "serviceDurationMinutes": 10 }
+   {
+      "address": "32 avenue de la Gineste, 12000 Rodez",
+      "quantity": 4,
+      "serviceDurationMinutes": 20
+   },
+   {
+      "address": "16 rue Jean XXIII, 12000 Rodez",
+      "quantity": 4,
+      "serviceDurationMinutes": 10
+   },   
+   {
+      "address": "60 Avenue de Fontanille 12000 Rodez",
+      "quantity": 4,
+      "stopType": "pickup",
+      "serviceDurationMinutes": 20
+   }
   ],
+  "isUseAllVehicule": true,
+  "objective": "distance",
   "vehicleCount": 2,
-  "vehicleCapacities": [10, 10],
-  "isUseAllVehicule": false,
-  "objective": "DISTANCE",
-  "maximumDistance": 200000,
-  "maximumDuration": 28800,
+  "vehicleCapacities": [10, 12],
+  "maximumDistance": 2000,
+  "maximumDuration": 20,
   "computationTime": 5
 }
 ```
+
+### Response
 
 ```json
 {
@@ -124,14 +141,60 @@ Content-Type: application/json
     {
       "vehicleId": 0,
       "stops": [
-        { "address": "Rodez", "latitude": 44.359272, "longitude": 2.566732, "serviceDurationMinutes": 0 },
-        { "address": "Flavin", "latitude": 44.289807, "longitude": 2.626077, "serviceDurationMinutes": 10 },
-        { "address": "Baraqueville", "latitude": 44.277646, "longitude": 2.449022, "serviceDurationMinutes": 10 },
-        { "address": "Rodez", "latitude": 44.359272, "longitude": 2.566732, "serviceDurationMinutes": 0 }
+        {
+          "address": "1 rue du Terral, 12000 Rodez",
+          "latitude": 44.350793,
+          "longitude": 2.574211,
+          "serviceDurationMinutes": 0
+        },
+        {
+          "address": "32 avenue de la Gineste, 12000 Rodez",
+          "latitude": 44.362338,
+          "longitude": 2.564982,
+          "serviceDurationMinutes": 20
+        },
+        {
+          "address": "60 Avenue de Fontanille 12000 Rodez",
+          "latitude": 44.362654,
+          "longitude": 2.553232,
+          "serviceDurationMinutes": 20
+        },
+        {
+          "address": "1 rue du Terral, 12000 Rodez",
+          "latitude": 44.350793,
+          "longitude": 2.574211,
+          "serviceDurationMinutes": 0
+        }
       ],
-      "totalDistanceMeters": 44559.0,
-      "totalDurationSeconds": 4226.0,
-      "totalLoadUnits": 8
+      "totalDistanceMeters": 6442.0,
+      "totalDurationSeconds": 3400.0,
+      "totalLoadUnits": 4
+    },
+    {
+      "vehicleId": 1,
+      "stops": [
+        {
+          "address": "1 rue du Terral, 12000 Rodez",
+          "latitude": 44.350793,
+          "longitude": 2.574211,
+          "serviceDurationMinutes": 0
+        },
+        {
+          "address": "16 rue Jean XXIII, 12000 Rodez",
+          "latitude": 44.359247,
+          "longitude": 2.583068,
+          "serviceDurationMinutes": 10
+        },
+        {
+          "address": "1 rue du Terral, 12000 Rodez",
+          "latitude": 44.350793,
+          "longitude": 2.574211,
+          "serviceDurationMinutes": 0
+        }
+      ],
+      "totalDistanceMeters": 3733.0,
+      "totalDurationSeconds": 1249.0,
+      "totalLoadUnits": 4
     }
   ]
 }
