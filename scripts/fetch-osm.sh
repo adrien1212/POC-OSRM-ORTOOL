@@ -2,10 +2,10 @@
 #
 # Download the OpenStreetMap extract that OSRM routes on.
 #
-# Defaults to the Aveyron department (~64 MB), which covers Rodez and the sample
-# data. For the wider Midi-Pyrénées region used in production (~390 MB):
+# Defaults to the Midi-Pyrénées region (~390 MB), the same extract production
+# uses.
 #
-#   OSM_REGION_URL=https://download.geofabrik.de/europe/france/midi-pyrenees-latest.osm.pbf \
+#   OSM_REGION_URL=https://download.openstreetmap.fr/extracts/europe/france/midi_pyrenees/aveyron.osm.pbf \
 #   OSM_FILE=midi-pyrenees-latest.osm.pbf ./scripts/fetch-osm.sh
 #
 # Any .osm.pbf extract works. Two good sources:
@@ -16,8 +16,8 @@
 #
 set -euo pipefail
 
-OSM_REGION_URL="${OSM_REGION_URL:-https://download.openstreetmap.fr/extracts/europe/france/midi_pyrenees/aveyron.osm.pbf}"
-OSM_FILE="${OSM_FILE:-aveyron.osm.pbf}"
+OSM_REGION_URL="${OSM_REGION_URL:-https://download.geofabrik.de/europe/france/midi-pyrenees-latest.osm.pbf}"
+OSM_FILE="${OSM_FILE:-midi-pyrenees-latest.osm.pbf}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATA_DIR="${REPO_ROOT}/data"
@@ -61,7 +61,7 @@ trap - EXIT
 
 echo
 echo "Done ($(du -h "${TARGET}" | cut -f1)). Next:"
-if [ "${OSM_FILE}" != "aveyron.osm.pbf" ]; then
+if [ "${OSM_FILE}" != "midi-pyrenees-latest.osm.pbf" ]; then
   echo "  echo 'OSM_FILE=${OSM_FILE}' >> .env"
 fi
 echo "  docker compose up"

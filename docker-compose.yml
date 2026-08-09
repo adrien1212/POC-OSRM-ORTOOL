@@ -10,7 +10,7 @@ services:
   osrm:
     image: ghcr.io/project-osrm/osrm-backend
     environment:
-      OSM_FILE: ${OSM_FILE:-aveyron.osm.pbf}
+      OSM_FILE: ${OSM_FILE:-midi-pyrenees-latest.osm.pbf}
     command:
       - sh
       - -lc

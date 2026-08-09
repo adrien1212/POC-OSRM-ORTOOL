@@ -12,7 +12,7 @@ A solver for the **Vehicle Routing Problem**: given a depot, a set of stops and 
 it decides who visits what and in which order. Distances and durations come from real road routing
 (OSRM on OpenStreetMap data), not straight lines, and the optimization runs on Google OR-Tools.
 
-Originally built for the Aveyron / Midi-Pyrénées region in France, but it works anywhere you have an
+Originally built for the Midi-Pyrénées region in France, but it works anywhere you have an
 OpenStreetMap extract.
 
 ## Features
@@ -32,7 +32,7 @@ You need **Docker** (with Compose) and about 2 GB of free disk.
 ```bash
 git clone https://github.com/adrien1212/vehicle-routing-planner
 cd vehicle-routing-planner
-./scripts/fetch-osm.sh     # downloads the Aveyron OSM extract (~64 MB) into data/
+./scripts/fetch-osm.sh     # downloads the Midi-Pyrénées OSM extract (~390 MB) into data/
 docker compose up
 ```
 
@@ -49,16 +49,16 @@ graph before it will answer. It caches the result in a Docker volume, so later s
 
 ### A different region
 
-The default extract covers the Aveyron department, which is enough to try the app. For anywhere else,
-point the script at another extract — [openstreetmap.fr](https://download.openstreetmap.fr/extracts/)
-splits France by department, [Geofabrik](https://download.geofabrik.de/) covers countries and larger
-regions:
+The default extract covers the whole Midi-Pyrénées region. For anywhere else — or for a smaller,
+faster download — point the script at another extract:
+[openstreetmap.fr](https://download.openstreetmap.fr/extracts/) splits France by department,
+[Geofabrik](https://download.geofabrik.de/) covers countries and larger regions:
 
 ```bash
-OSM_REGION_URL=https://download.geofabrik.de/europe/france/midi-pyrenees-latest.osm.pbf \
-OSM_FILE=midi-pyrenees-latest.osm.pbf ./scripts/fetch-osm.sh
+OSM_REGION_URL=https://download.openstreetmap.fr/extracts/europe/france/midi_pyrenees/aveyron.osm.pbf \
+OSM_FILE=aveyron.osm.pbf ./scripts/fetch-osm.sh
 
-echo 'OSM_FILE=midi-pyrenees-latest.osm.pbf' >> .env
+echo 'OSM_FILE=aveyron.osm.pbf' >> .env
 docker compose up
 ```
 
