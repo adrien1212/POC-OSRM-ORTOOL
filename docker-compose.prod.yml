@@ -21,7 +21,7 @@ services:
         set -e
         BASE="$${OSM_FILE%.osm.pbf}"
         if [ ! -f "/input/$$OSM_FILE" ]; then
-          echo "Missing /input/$$OSM_FILE — run ./scripts/fetch-osm.sh first." >&2
+          echo "Missing in docker volume /input/$$OSM_FILE — run ./scripts/fetch-osm.sh first." >&2
           exit 1
         fi
         cp "/input/$$OSM_FILE" "/data/$$OSM_FILE"
@@ -38,6 +38,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 60
+    ports:
+      - "5000:5000"
     volumes:
       - ./data:/input:ro
       - osrm_data:/data
@@ -47,7 +49,7 @@ services:
     restart: unless-stopped
     environment:
       OSRM_BASE_URL: http://osrm:5000
-      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:*}
+      APP_CORS_ALLOWED_ORIGINS: https://carto.traino.tech*
     ports:
       - "8012:8012"
     depends_on:
@@ -62,6 +64,9 @@ services:
     depends_on:
       - backend
       - osrm
+    environment:
+      VITE_OSRM_BASE_URL: /osrm
+      VITE_API_BASE_URL: /api
 
 volumes:
   osrm_data:
