@@ -14,11 +14,19 @@ import { Section } from "./Section";
 import { DepotSelector } from "./DepotSelector";
 import { CapacityConfig } from "./CapacityConfig";
 import { NumberConfig } from "./NumberConfig";
-import { VehiclesConfig } from "./VehiclesConfig";
-import { AlertCircle, Loader2, RotateCcw, Sparkles } from "lucide-react";
+import {
+  AlertCircle,
+  Clock,
+  Loader2,
+  RotateCcw,
+  Route,
+  Truck,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cardBase, cardSelected, cardInteractive } from "@/lib/brand";
 
 interface Props {
   result: OptimizeResponse | null;
@@ -228,25 +236,25 @@ export function Sidebar({ result, onResult }: Props) {
   }
 
   return (
-    <aside className="flex h-full w-full flex-col overflow-y-auto border-r border-border bg-background">
-      <div className="space-y-6 p-4">
-        <Section title="Search address">
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={planner.loadDemo}
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
-            >
-              Load demo
-            </button>
-            <button
-              type="button"
-              onClick={planner.loadShortDemo}
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
-            >
-              Load 10-point demo
-            </button>
-          </div>
+    <aside className="flex h-full w-full flex-col overflow-y-auto bg-canvas">
+      <div className="space-y-7 p-4">
+        <Section
+          title="Search address"
+          action={
+            <div className="flex gap-2">
+              <Button size="xs" variant="secondary" onClick={planner.loadDemo}>
+                Load demo
+              </Button>
+              <Button
+                size="xs"
+                variant="secondary"
+                onClick={planner.loadShortDemo}
+              >
+                Load 10 points
+              </Button>
+            </div>
+          }
+        >
           <AddressSearch onSelect={planner.addPoint} />
         </Section>
 
@@ -261,7 +269,7 @@ export function Sidebar({ result, onResult }: Props) {
           />
         </Section>
 
-        <Section title="Depot configuration">
+        <Section title="Depot">
           <DepotSelector
             points={planner.points}
             startPointId={planner.startPointId}
@@ -273,65 +281,68 @@ export function Sidebar({ result, onResult }: Props) {
         </Section>
 
         <Section title="Settings">
-          <div className="space-y-3 rounded-xl border border-border bg-card p-3">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-foreground">
+          <div className={`${cardBase} space-y-3 p-3`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink">
                   Optimization objective
                 </p>
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Choose whether the solver should favor shorter distance or
-                  shorter duration.
+                <p className="text-[13px] leading-5 text-steel">
+                  Favor the shortest route or the fastest one.
                 </p>
               </div>
-              <span className="rounded-full bg-secondary px-2 py-1 text-[11px] font-medium text-secondary-foreground">
+              <Badge variant="neutral" size="sm" className="shrink-0">
                 {planner.optimizationMode === "duration"
                   ? "Duration"
                   : "Distance"}
-              </span>
+              </Badge>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <ModeButton
                 active={planner.optimizationMode === "distance"}
                 onClick={() => planner.setOptimizationMode("distance")}
+                icon={<Route className="h-[18px] w-[18px]" />}
                 title="Distance"
-                subtitle="Best for shortest route"
+                subtitle="Shortest total route"
               />
               <ModeButton
                 active={planner.optimizationMode === "duration"}
                 onClick={() => planner.setOptimizationMode("duration")}
+                icon={<Clock className="h-[18px] w-[18px]" />}
                 title="Duration"
-                subtitle="Best for fastest route"
+                subtitle="Fastest total route"
               />
             </div>
           </div>
 
           <NumberConfig
-            title={"Maximum distance (km)"}
+            title="Maximum distance (km)"
+            icon={Route}
             quantity={planner.maximumDistance}
             onChange={planner.setMaximumDistance}
           />
 
           <NumberConfig
-            title={"Maximum distance (heures)"}
+            title="Maximum duration (hours)"
+            icon={Clock}
             quantity={planner.maximumDuration}
             onChange={planner.setMaximumDuration}
           />
 
-          <div className="space-y-3 rounded-xl border border-border bg-card p-3">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-foreground">
+          <div className={`${cardBase} space-y-3 p-3`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink">
                   Computation time
                 </p>
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Maximum solver time to find the best solution in seconds.
+                <p className="text-[13px] leading-5 text-steel">
+                  How long the solver may search, in seconds.
                 </p>
               </div>
-              <span className="rounded-full bg-secondary px-2 py-1 text-[11px] font-medium text-secondary-foreground">
+              <Badge variant="neutral" size="sm" className="shrink-0">
                 {planner.computationTime}s
-              </span>
+              </Badge>
             </div>
             <div className="space-y-2">
               <Slider
@@ -343,7 +354,7 @@ export function Sidebar({ result, onResult }: Props) {
                   planner.setComputationTime(value ?? 1)
                 }
               />
-              <div className="flex justify-between text-[11px] text-muted-foreground">
+              <div className="flex justify-between text-[11px] text-stone">
                 <span>1s</span>
                 <span>60s</span>
               </div>
@@ -353,51 +364,34 @@ export function Sidebar({ result, onResult }: Props) {
 
         <Section title="Fleet">
           <NumberConfig
-            title={"Vehicules"}
+            title="Vehicles"
+            icon={Truck}
             quantity={planner.vehicles}
             onChange={planner.setVehicles}
           />
-          <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Use all vehicles
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Force the solver to assign at least one stop to every vehicle.
-              </p>
-            </div>
-            <Switch
-              checked={planner.useAllVehicule}
-              onCheckedChange={planner.setUseAllVehicule}
-            />
-          </div>
-          <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Capacity constraints
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Enable demand and vehicle capacity checks.
-              </p>
-            </div>
-            <Switch
-              checked={planner.capacityEnabled}
-              onCheckedChange={planner.setCapacityEnabled}
-            />
-          </div>
+          <ToggleRow
+            title="Use all vehicles"
+            description="Force the solver to assign at least one stop to every vehicle."
+            checked={planner.useAllVehicule}
+            onCheckedChange={planner.setUseAllVehicule}
+          />
+          <ToggleRow
+            title="Capacity constraints"
+            description="Enable demand and vehicle capacity checks."
+            checked={planner.capacityEnabled}
+            onCheckedChange={planner.setCapacityEnabled}
+          />
           {planner.capacityEnabled && (
-            <div className="pt-3">
-              <CapacityConfig
-                vehicles={planner.vehicles}
-                vehicleCapacities={planner.vehicleCapacities}
-                onVehicleCapacityChange={planner.setVehicleCapacityAt}
-              />
-            </div>
+            <CapacityConfig
+              vehicles={planner.vehicles}
+              vehicleCapacities={planner.vehicleCapacities}
+              onVehicleCapacityChange={planner.setVehicleCapacityAt}
+            />
           )}
         </Section>
 
         <Section title="Summary">
-          <dl className="grid grid-cols-2 gap-2 text-sm">
+          <dl className="grid grid-cols-2 gap-2">
             <SummaryRow
               label="Total points"
               value={String(planner.points.length)}
@@ -409,7 +403,10 @@ export function Sidebar({ result, onResult }: Props) {
                   label="Total quantity"
                   value={String(totalDemand)}
                 />
-                <SummaryRow label="Fleet cap." value={String(totalCapacity)} />
+                <SummaryRow
+                  label="Fleet capacity"
+                  value={String(totalCapacity)}
+                />
               </>
             ) : (
               <SummaryRow label="Capacity mode" value="Off" />
@@ -419,13 +416,13 @@ export function Sidebar({ result, onResult }: Props) {
         </Section>
 
         {errors.length > 0 && (
-          <div className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <div className="space-y-1.5 rounded-xl bg-brand-red p-3">
             {errors.map((e) => (
               <p
                 key={e}
-                className="flex items-center gap-2 text-xs text-destructive"
+                className="flex items-start gap-2 text-[13px] leading-5 text-coral-dark"
               >
-                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 {e}
               </p>
             ))}
@@ -433,30 +430,36 @@ export function Sidebar({ result, onResult }: Props) {
         )}
 
         {optimize.isError && (
-          <p className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            Optimization request failed. Please try again.
+          <p className="flex items-start gap-2 rounded-xl bg-brand-red p-3 text-[13px] leading-5 text-coral-dark">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            The optimization request failed. Please try again.
           </p>
         )}
 
-        <button
-          type="button"
-          onClick={handleOptimize}
-          disabled={!canOptimize}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <div className="space-y-2">
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={handleOptimize}
+            disabled={!canOptimize}
+          >
+            {optimize.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            {optimize.isPending ? "Optimizing" : "Optimize routes"}
+          </Button>
+
           {optimize.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="h-1.5 overflow-hidden rounded-full bg-hairline">
+              <div
+                className="h-full rounded-full bg-ink transition-all duration-200 ease-brand"
+                style={{ width: `${fakeProgress}%` }}
+              />
+            </div>
           ) : (
-            <Sparkles className="h-4 w-4" />
+            // Reassurance sits below the button as caption text, never inside it.
+            <p className="text-center text-[13px] text-steel">
+              Runs for up to {planner.computationTime}s. Nothing is saved.
+            </p>
           )}
-          {optimize.isPending ? "Optimizing…" : "Optimize Routes"}
-        </button>
-        <div className="h-2 overflow-hidden rounded-full bg-secondary/70">
-          <div
-            className="h-full rounded-full bg-primary transition-all duration-200 ease-out"
-            style={{ width: `${fakeProgress}%` }}
-          />
         </div>
 
         {result && (
@@ -466,7 +469,7 @@ export function Sidebar({ result, onResult }: Props) {
               <button
                 type="button"
                 onClick={clearResult}
-                className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-1 rounded-full px-2 py-1 text-[13px] font-medium text-steel transition-colors duration-150 ease-brand hover:bg-hairline-soft hover:text-ink"
               >
                 <RotateCcw className="h-3.5 w-3.5" /> Clear
               </button>
@@ -480,13 +483,14 @@ export function Sidebar({ result, onResult }: Props) {
               selectedRouteId={planner.selectedRouteId}
               onSelectRoute={planner.setSelectedRouteId}
             />
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              className="w-full"
+              disabled={planner.selectedRouteId === null}
               onClick={() => planner.setSelectedRouteId(null)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               View all routes
-            </button>
+            </Button>
           </Section>
         )}
       </div>
@@ -494,14 +498,40 @@ export function Sidebar({ result, onResult }: Props) {
   );
 }
 
+function ToggleRow({
+  title,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
+}) {
+  return (
+    <div
+      className={`${cardBase} flex items-center justify-between gap-3 px-3 py-2.5`}
+    >
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-ink">{title}</p>
+        <p className="text-[13px] leading-5 text-steel">{description}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </div>
+  );
+}
+
 function ModeButton({
   active,
   onClick,
+  icon,
   title,
   subtitle,
 }: {
   active: boolean;
   onClick: () => void;
+  icon: React.ReactNode;
   title: string;
   subtitle: string;
 }) {
@@ -509,15 +539,24 @@ function ModeButton({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={[
-        "rounded-lg border px-3 py-2 text-left transition-colors",
-        active
-          ? "border-primary bg-primary/10 text-foreground"
-          : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-foreground",
+        "px-3 py-2.5 text-left",
+        active ? cardSelected : cardInteractive,
+        "outline-none focus-visible:border-brand-blue",
       ].join(" ")}
     >
-      <span className="block text-sm font-semibold">{title}</span>
-      <span className="mt-0.5 block text-xs leading-5">{subtitle}</span>
+      <span
+        className={`flex items-center gap-2 text-sm font-semibold ${active ? "text-ink" : "text-slate"}`}
+      >
+        <span className={active ? "text-brand-blue" : "text-stone"}>
+          {icon}
+        </span>
+        {title}
+      </span>
+      <span className="mt-0.5 block text-[13px] leading-5 text-steel">
+        {subtitle}
+      </span>
     </button>
   );
 }
@@ -581,11 +620,9 @@ function displayDepotLabel(
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="truncate text-sm font-semibold text-foreground">
-        {value}
-      </dd>
+    <div className={`${cardBase} px-3 py-2`}>
+      <dt className="text-[13px] text-steel">{label}</dt>
+      <dd className="truncate text-sm font-semibold text-ink">{value}</dd>
     </div>
   );
 }

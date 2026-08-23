@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { searchAddress } from "@/api/addressSearch";
 import type { AddressResult } from "@/types";
 import { formatCoords } from "@/utils/format";
+import { inputBase } from "@/lib/brand";
 import { Loader2, MapPin, Search } from "lucide-react";
 
 interface Props {
@@ -49,7 +50,7 @@ export function AddressSearch({ onSelect }: Props) {
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-steel" />
         <input
           value={query}
           onChange={(e) => {
@@ -57,32 +58,38 @@ export function AddressSearch({ onSelect }: Props) {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Search an address…"
-          className="w-full rounded-lg border border-input bg-background py-2.5 pl-9 pr-9 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
+          placeholder="Search an address"
+          className={`${inputBase} h-11 pl-10 pr-10 text-sm`}
         />
         {isFetching && (
-          <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+          <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-steel" />
         )}
       </div>
 
       {open && debounced.trim().length > 1 && (
-        <div className="absolute z-[1100] mt-1 max-h-72 w-full overflow-auto rounded-lg border border-border bg-popover p-1 shadow-lg">
+        // Dropdowns are the one overlay the system gives depth to (elev-4).
+        <div className="absolute z-[1100] mt-2 max-h-72 w-full overflow-auto rounded-xl border border-hairline bg-canvas p-1 shadow-overlay">
           {results.length === 0 && !isFetching && (
-            <p className="px-3 py-2 text-sm text-muted-foreground">
-              No results
-            </p>
+            <p className="px-3 py-2 text-sm text-steel">No results</p>
           )}
           {results.map((r) => (
             <button
               key={r.id}
               type="button"
               onClick={() => handleSelect(r)}
-              className="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+              className={[
+                "flex w-full items-start gap-2.5 rounded-md px-3 py-2 text-left text-sm",
+                "transition-colors duration-150 ease-brand",
+                "hover:bg-hairline-soft",
+                "outline-none focus-visible:bg-hairline-soft",
+              ].join(" ")}
             >
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <MapPin className="mt-0.5 h-[18px] w-[18px] shrink-0 text-steel" />
               <span className="min-w-0">
-                <span className="block truncate font-medium">{r.address}</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block truncate font-medium text-ink">
+                  {r.address}
+                </span>
+                <span className="block text-[13px] text-steel">
                   {formatCoords(r.latitude, r.longitude)}
                 </span>
               </span>

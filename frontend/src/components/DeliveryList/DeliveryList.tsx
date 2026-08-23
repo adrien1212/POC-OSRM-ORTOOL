@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { DeliveryPoint, StopType } from "@/types";
 import { formatCoords } from "@/utils/format";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cardInteractive, controlXs, focusEdge, iconButton } from "@/lib/brand";
 import { Check, MapPin, Pencil, Trash2, X } from "lucide-react";
 
 interface Props {
@@ -12,28 +15,32 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-function badge(p: DeliveryPoint, startId: string | null) {
-  if (p.id === startId) {
-    return { label: "Depot", cls: "bg-[#7c3aed] text-white" };
+/*
+ * Pill tab pair, per components/navigation/PillTabs.prompt.md: the active tab
+ * is solid black, the inactive one is white with a hairline border and steel
+ * text. Pickup borrows the orange pastel so the two stop types stay separable
+ * without introducing a colour outside the documented set.
+ */
+function stopTypeTab(active: boolean, variant: StopType) {
+  const base = [
+    "rounded-full px-3 py-1 text-[13px] font-medium",
+    "transition-colors duration-150 ease-brand",
+    "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
+  ].join(" ");
+  if (!active) {
+    return `${base} border border-hairline bg-canvas text-steel hover:bg-hairline-soft hover:text-ink`;
   }
-  return null;
+  return variant === "pickup"
+    ? `${base} bg-brand-yellow-deep text-ink`
+    : `${base} bg-ink text-canvas`;
 }
 
-function stopTypeBadge(stopType: StopType) {
-  return stopType === "pickup"
-    ? { label: "Pickup", cls: "bg-amber-500 text-white" }
-    : { label: "Delivery", cls: "bg-primary text-primary-foreground" };
-}
-
-function stopTypeButtonClass(active: boolean, variant: StopType) {
-  const base =
-    "rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors";
-  if (active) {
-    return variant === "pickup"
-      ? `${base} bg-amber-500 text-white`
-      : `${base} bg-primary text-primary-foreground`;
-  }
-  return `${base} border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground`;
+function fieldLabel(text: string) {
+  return (
+    <span className="mb-1 block text-[13px] font-medium text-steel">
+      {text}
+    </span>
+  );
 }
 
 export function DeliveryList({
@@ -88,9 +95,9 @@ export function DeliveryList({
 
   if (points.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border px-4 py-8 text-center">
-        <MapPin className="mx-auto h-6 w-6 text-muted-foreground" />
-        <p className="mt-2 text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-hairline px-4 py-8 text-center">
+        <MapPin className="mx-auto h-[22px] w-[22px] text-stone" />
+        <p className="mt-2 text-sm text-steel">
           No delivery points yet. Search an address to add one.
         </p>
       </div>
@@ -100,82 +107,80 @@ export function DeliveryList({
   return (
     <ul className="space-y-2">
       {points.map((p, idx) => {
-        const b = badge(p, startPointId);
         const editing = editingId === p.id;
         const isDepot = p.id === startPointId;
         const oversizedDemand = showDemand && p.quantity > maxVehicleCapacity;
-        const typeBadge =
-          showDemand && !isDepot ? stopTypeBadge(p.stopType) : null;
+        const showTypeControls = showDemand && !isDepot;
 
         return (
-          <li
-            key={p.id}
-            className="rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/40"
-          >
+          <li key={p.id} className={`${cardInteractive} p-3`}>
             {editing ? (
-              <div className="space-y-2">
-                <input
-                  value={draft.address}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, address: e.target.value }))
-                  }
-                  className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
-                />
-                <div className="flex gap-2">
+              <div className="space-y-2.5">
+                <label className="block">
+                  {fieldLabel("Address")}
                   <input
-                    value={draft.lat}
+                    value={draft.address}
                     onChange={(e) =>
-                      setDraft((d) => ({ ...d, lat: e.target.value }))
+                      setDraft((d) => ({ ...d, address: e.target.value }))
                     }
-                    placeholder="lat"
-                    className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    className={controlXs}
                   />
-                  <input
-                    value={draft.lng}
-                    onChange={(e) =>
-                      setDraft((d) => ({ ...d, lng: e.target.value }))
-                    }
-                    placeholder="lng"
-                    className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
-                  />
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    {fieldLabel("Latitude")}
+                    <input
+                      value={draft.lat}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, lat: e.target.value }))
+                      }
+                      className={controlXs}
+                    />
+                  </label>
+                  <label className="block">
+                    {fieldLabel("Longitude")}
+                    <input
+                      value={draft.lng}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, lng: e.target.value }))
+                      }
+                      className={controlXs}
+                    />
+                  </label>
                 </div>
                 {showDemand && (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px]">
-                    <label className="block">
-                      <span className="mb-1 block text-xs font-medium text-muted-foreground">
-                        Type
-                      </span>
+                    <div>
+                      {fieldLabel("Type")}
                       <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={() =>
                             setDraft((d) => ({ ...d, stopType: "delivery" }))
                           }
-                          className={stopTypeButtonClass(
+                          className={stopTypeTab(
                             draft.stopType === "delivery",
                             "delivery",
                           )}
                         >
-                          D
+                          Delivery
                         </button>
                         <button
                           type="button"
                           onClick={() =>
                             setDraft((d) => ({ ...d, stopType: "pickup" }))
                           }
-                          className={stopTypeButtonClass(
+                          className={stopTypeTab(
                             draft.stopType === "pickup",
                             "pickup",
                           )}
                         >
-                          P
+                          Pickup
                         </button>
                       </div>
-                    </label>
+                    </div>
                     <label className="block">
-                      <span className="mb-1 block text-xs font-medium text-muted-foreground">
-                        Quantity
-                      </span>
+                      {fieldLabel("Quantity")}
                       <input
                         type="number"
                         min={0}
@@ -183,16 +188,13 @@ export function DeliveryList({
                         onChange={(e) =>
                           setDraft((d) => ({ ...d, quantity: e.target.value }))
                         }
-                        placeholder="Qty"
-                        className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                        className={controlXs}
                       />
                     </label>
                   </div>
                 )}
                 <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Service time (min)
-                  </span>
+                  {fieldLabel("Service time (min)")}
                   <input
                     type="number"
                     min={0}
@@ -203,99 +205,88 @@ export function DeliveryList({
                         serviceDurationMinutes: e.target.value,
                       }))
                     }
-                    placeholder="0"
-                    className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-ring"
+                    className={controlXs}
                   />
                 </label>
-                <div className="flex justify-end gap-1">
-                  <button
-                    onClick={() => save(p.id)}
-                    className="flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                  >
-                    <Check className="h-3.5 w-3.5" /> Save
-                  </button>
-                  <button
+                <div className="flex justify-end gap-2 pt-0.5">
+                  <Button
+                    size="xs"
+                    variant="secondary"
                     onClick={() => setEditingId(null)}
-                    className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium hover:bg-accent"
                   >
                     <X className="h-3.5 w-3.5" /> Cancel
-                  </button>
+                  </Button>
+                  <Button size="xs" onClick={() => save(p.id)}>
+                    <Check className="h-3.5 w-3.5" /> Save
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface text-[11px] font-semibold text-slate">
                   {idx + 1}
                 </span>
                 <div className="min-w-0 flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium text-foreground">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="truncate text-sm font-medium text-ink">
                       {p.address}
                     </p>
-                    {b && (
-                      <span
-                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${b.cls}`}
-                      >
-                        {b.label}
-                      </span>
+                    {/* Yellow is the depot's signature here, matching its map pin. */}
+                    {isDepot && (
+                      <Badge variant="promo" size="sm">
+                        Depot
+                      </Badge>
                     )}
-                    {typeBadge && (
-                      <span
-                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${typeBadge.cls}`}
+                    {showTypeControls && (
+                      <Badge
+                        variant={p.stopType === "pickup" ? "orange" : "neutral"}
+                        size="sm"
                       >
-                        {typeBadge.label}
-                      </span>
+                        {p.stopType === "pickup" ? "Pickup" : "Delivery"}
+                      </Badge>
                     )}
                     {oversizedDemand && (
-                      <span className="shrink-0 rounded bg-destructive px-1.5 py-0.5 text-[10px] font-semibold text-destructive-foreground">
+                      <Badge variant="destructive" size="sm">
                         Too large
-                      </span>
+                      </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[13px] text-steel">
                     {formatCoords(p.latitude, p.longitude)}
                   </p>
-                  {showDemand && !isDepot ? (
+                  {showTypeControls ? (
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px]">
-                      <label className="block">
-                        <span className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Type
-                        </span>
+                      <div>
+                        {fieldLabel("Type")}
                         <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={() =>
-                              onUpdate(p.id, {
-                                stopType: "delivery",
-                              })
+                              onUpdate(p.id, { stopType: "delivery" })
                             }
-                            className={stopTypeButtonClass(
+                            className={stopTypeTab(
                               p.stopType === "delivery",
                               "delivery",
                             )}
                           >
-                            D
+                            Delivery
                           </button>
                           <button
                             type="button"
                             onClick={() =>
-                              onUpdate(p.id, {
-                                stopType: "pickup",
-                              })
+                              onUpdate(p.id, { stopType: "pickup" })
                             }
-                            className={stopTypeButtonClass(
+                            className={stopTypeTab(
                               p.stopType === "pickup",
                               "pickup",
                             )}
                           >
-                            P
+                            Pickup
                           </button>
                         </div>
-                      </label>
+                      </div>
                       <label className="block">
-                        <span className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Quantity
-                        </span>
+                        {fieldLabel("Quantity")}
                         <input
                           type="number"
                           min={0}
@@ -308,15 +299,17 @@ export function DeliveryList({
                               ),
                             })
                           }
-                          className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs outline-none transition-colors focus:ring-2 focus:ring-ring/30"
+                          className={[
+                            "w-full rounded-md border border-hairline-strong bg-canvas px-2 py-1 text-[13px] text-ink",
+                            "transition-colors duration-150 ease-brand",
+                            focusEdge,
+                          ].join(" ")}
                         />
                       </label>
                     </div>
                   ) : null}
                   <label className="block">
-                    <span className="mb-1 block text-xs font-medium text-muted-foreground">
-                      Service time (min)
-                    </span>
+                    {fieldLabel("Service time (min)")}
                     <input
                       type="number"
                       min={0}
@@ -329,22 +322,28 @@ export function DeliveryList({
                           ),
                         })
                       }
-                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs outline-none transition-colors focus:ring-2 focus:ring-ring/30"
+                      className={[
+                        "w-full rounded-md border border-hairline-strong bg-canvas px-2 py-1 text-[13px] text-ink",
+                        "transition-colors duration-150 ease-brand",
+                        focusEdge,
+                      ].join(" ")}
                     />
                   </label>
                 </div>
-                <div className="flex shrink-0 gap-1">
+                <div className="flex shrink-0 gap-0.5">
                   <button
                     onClick={() => startEdit(p)}
                     title="Edit"
-                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    aria-label={`Edit ${p.address}`}
+                    className={iconButton}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => onDelete(p.id)}
                     title="Delete"
-                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={`Delete ${p.address}`}
+                    className={`${iconButton} hover:bg-brand-red hover:text-coral-dark`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

@@ -1,4 +1,6 @@
 import { Package } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cardBase, focusEdge } from "@/lib/brand";
 
 interface Props {
   vehicles: number;
@@ -17,19 +19,19 @@ export function CapacityConfig({
   );
 
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-card p-3">
+    <div className={`${cardBase} space-y-3 p-3`}>
       <div className="flex items-start justify-between gap-3">
-        <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Package className="h-4 w-4 text-primary" />
+        <span className="flex items-center gap-2 text-sm font-medium text-ink">
+          <Package className="h-4 w-4 text-steel" />
           Vehicle capacity
         </span>
-        <span className="rounded-full bg-secondary px-2 py-1 text-[11px] font-medium text-secondary-foreground">
+        <Badge variant="neutral" size="sm">
           {totalCapacity} total
-        </span>
+        </Badge>
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">
+        <p className="text-[13px] font-medium text-steel">
           Per-vehicle overrides
         </p>
         <div className="grid gap-2">
@@ -38,9 +40,9 @@ export function CapacityConfig({
             return (
               <label
                 key={index}
-                className="flex items-center gap-3 rounded-md border border-border px-3 py-2"
+                className="flex items-center gap-3 rounded-md border border-hairline-soft px-3 py-2"
               >
-                <span className="w-20 shrink-0 text-xs font-medium text-foreground">
+                <span className="w-20 shrink-0 text-[13px] font-medium text-slate">
                   Vehicle {index + 1}
                 </span>
                 <input
@@ -50,7 +52,11 @@ export function CapacityConfig({
                   onChange={(e) =>
                     onVehicleCapacityChange(index, Number(e.target.value))
                   }
-                  className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
+                  className={[
+                    "min-w-0 flex-1 rounded-md border border-hairline-strong bg-canvas px-2 py-1 text-sm text-ink",
+                    "transition-colors duration-150 ease-brand",
+                    focusEdge,
+                  ].join(" ")}
                 />
               </label>
             );
@@ -58,11 +64,10 @@ export function CapacityConfig({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span>New vehicles inherit the previous capacity value.</span>
-        <span className="hidden sm:inline">•</span>
-        <span>Overrides are sent to the backend per vehicle.</span>
-      </div>
+      <p className="text-[13px] leading-5 text-steel">
+        New vehicles inherit the previous capacity value. Overrides are sent to
+        the backend per vehicle.
+      </p>
     </div>
   );
 }

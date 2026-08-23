@@ -5,27 +5,140 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
+ * Canvas Workspace design system — applied.
  *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
+ * Source of truth: .claude/skills/canvas-workspace-design/ (tokens/*.css, README.md).
+ * Brand values are authored there as hex; they are converted to oklch here because
+ * this project requires oklch. The trailing comment on each line is the source hex.
  *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
+ * Layer 1  :root brand scale   — verbatim brand tokens, named as the design system names them.
+ * Layer 2  :root semantic      — shadcn/Radix slots pointed at brand tokens.
+ * Layer 3  @theme inline       — exposes both as Tailwind utilities.
  *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * House rules this file encodes (see the skill README for the reasoning):
+ *  - Black (--ink) is the dominant interactive colour. Yellow is a SIGNATURE, never a CTA.
+ *  - Flat by default: cards take a hairline border, not a shadow. --shadow-board is the
+ *    single documented exception (the framed product surface — here, the map).
+ *  - Focus is a 2px --brand-blue border that REPLACES the resting border. Never a glow ring.
+ *  - Corners: pill (9999px) on buttons/tabs/chips; cards ladder 16/20/28; inputs 8 and below.
+ *  - Weights 400/500/600 only — never 700.
+ */
+
+:root {
+  /* ---- Brand scale (verbatim from tokens/colors.css) ---- */
+  --brand-yellow: oklch(0.8742 0.1682 90.93); /* #ffd02f */
+  --brand-yellow-deep: oklch(0.8258 0.1701 82.18); /* #fcb900 */
+  --yellow-light: oklch(0.964 0.0629 96.63); /* #fff4c4 */
+  --yellow-dark: oklch(0.4954 0.0904 92.53); /* #746019 */
+  --brand-blue: oklch(0.5713 0.2346 268.68); /* #4262ff */
+  --blue-450: oklch(0.6189 0.2035 270.84); /* #5b76fe */
+  --blue-pressed: oklch(0.4376 0.1858 268.56); /* #2a41b6 */
+  --brand-coral: oklch(0.7884 0.1226 20.19); /* #ff9999 */
+  --coral-light: oklch(0.8772 0.0653 18.48); /* #ffc6c6 */
+  --coral-dark: oklch(0.3071 0.126 29.23); /* #600000 */
+  --brand-rose: oklch(0.9231 0.0564 336.21); /* #ffd8f4 */
+  --rose-light: oklch(0.935 0.038 343.5); /* #fde0f0 */
+  --brand-teal: oklch(0.7167 0.1236 186.68); /* #0fbcb0 */
+  --teal-light: oklch(0.9462 0.056 189.36); /* #c3faf5 */
+  --moss-dark: oklch(0.5119 0.0812 193.8); /* #187574 */
+  --brand-orange-light: oklch(0.9388 0.043 67.26); /* #ffe6cd */
+  --brand-red: oklch(0.9029 0.0438 17.99); /* #fbd4d4 */
+  --brand-red-dark: oklch(0.8488 0.0341 17.84); /* #e3c5c5 */
+  --success-accent: oklch(0.6786 0.1566 158.79); /* #00b473 */
+
+  /* Surface */
+  --canvas: oklch(1 0 0); /* #ffffff */
+  --surface: oklch(0.9789 0.0029 264.54); /* #f7f8fa */
+  --surface-soft: oklch(0.9876 0.0017 247.84); /* #fafbfc */
+  --surface-yellow: oklch(0.9783 0.0322 93.51); /* #fff8e0 */
+  --hairline: oklch(0.913 0.0084 271.32); /* #e0e2e8 */
+  --hairline-soft: oklch(0.9545 0.0046 258.32); /* #eef0f3 */
+  --hairline-strong: oklch(0.84 0.0156 273.82); /* #c7cad5 */
+
+  /* Ink ramp */
+  --ink-deep: oklch(0.1597 0.1032 271.62); /* #050038 */
+  --ink: oklch(0.2273 0.0038 286.09); /* #1c1c1e */
+  --charcoal: oklch(0.2964 0.0144 285.49); /* #2c2c34 */
+  --slate: oklch(0.4691 0.0267 271.65); /* #555a6a */
+  --steel: oklch(0.5435 0.0238 273.74); /* #6b6f7e */
+  --stone: oklch(0.6591 0.0224 276.77); /* #8e91a0 */
+  --muted-ink: oklch(0.7333 0.019 275.54); /* #a5a8b5 */
+
+  /* ---- Semantic slots (shadcn/Radix contract, pointed at the brand) ---- */
+  --background: var(--surface);
+  --foreground: var(--ink);
+  --card: var(--canvas);
+  --card-foreground: var(--ink);
+  --popover: var(--canvas);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--canvas);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--slate);
+  --muted: var(--surface);
+  --muted-foreground: var(--steel);
+  --accent: var(--hairline-soft);
+  --accent-foreground: var(--ink);
+  --destructive: var(--coral-dark);
+  --destructive-foreground: var(--canvas);
+  --success: var(--success-accent);
+  --success-foreground: var(--canvas);
+  --border: var(--hairline);
+  --input: var(--hairline-strong);
+  --ring: var(--brand-blue);
+
+  /* Route ramp — drawn only from the documented brand set, ordered for
+     maximum separation against light OSM tiles. See utils/colors.ts. */
+  --chart-1: var(--brand-blue);
+  --chart-2: var(--moss-dark);
+  --chart-3: var(--brand-yellow-deep);
+  --chart-4: var(--coral-dark);
+  --chart-5: var(--brand-teal);
+
+  /* Sidebar slots */
+  --sidebar: var(--canvas);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: var(--canvas);
+  --sidebar-accent: var(--hairline-soft);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline-soft);
+  --sidebar-ring: var(--brand-blue);
+}
+
+/*
+ * The brand ships no dark-mode tokens — the source analysis never covered them and the
+ * design system explicitly declines to invent them ("Known gaps" in the skill README).
+ * Nothing in this app toggles `.dark`, so the block is deliberately absent rather than
+ * filled with off-brand guesses. Add it only once the brand documents dark values.
  */
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  /* Type — Roobert PRO is licensed and unsupplied; Figtree is the documented
+     free stand-in, loaded from Google Fonts in index.html. */
+  --font-sans:
+    "Roobert PRO", "Figtree", "Noto Sans", -apple-system, BlinkMacSystemFont,
+    sans-serif;
+
+  /* Corners — the brand ladder, verbatim. The pill is the loudest signature. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+  --radius-4xl: 32px;
+
+  /* Elevation — flat by default; one documented exception. */
+  --shadow-hairline: 0 1px 2px 0 rgb(5 0 56 / 0.04);
+  --shadow-board: 0 12px 32px -4px rgb(5 0 56 / 0.08);
+  --shadow-overlay: 0 16px 48px -8px rgb(5 0 56 / 0.12);
+
+  /* Motion — 150ms state changes, 200ms larger transitions, one curve. */
+  --ease-brand: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* Semantic colours */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -61,79 +174,37 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-}
 
-:root {
-  --radius: 0.625rem;
-  --background: oklch(0.985 0.005 247);
-  --foreground: oklch(0.18 0.03 257);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.03 257);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.03 257);
-  --primary: oklch(0.55 0.16 250);
-  --primary-foreground: oklch(0.99 0.005 247);
-  --secondary: oklch(0.96 0.01 247);
-  --secondary-foreground: oklch(0.25 0.04 257);
-  --muted: oklch(0.96 0.01 247);
-  --muted-foreground: oklch(0.52 0.03 257);
-  --accent: oklch(0.93 0.04 200);
-  --accent-foreground: oklch(0.25 0.06 230);
-  --destructive: oklch(0.58 0.22 27);
-  --destructive-foreground: oklch(0.99 0.003 247);
-  --success: oklch(0.62 0.16 155);
-  --success-foreground: oklch(0.99 0.003 247);
-  --border: oklch(0.91 0.012 255);
-  --input: oklch(0.91 0.012 255);
-  --ring: oklch(0.55 0.16 250);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
-}
-
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Brand colours, addressable directly (bg-brand-yellow, text-slate, …) */
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-yellow-deep: var(--brand-yellow-deep);
+  --color-yellow-light: var(--yellow-light);
+  --color-yellow-dark: var(--yellow-dark);
+  --color-brand-blue: var(--brand-blue);
+  --color-blue-450: var(--blue-450);
+  --color-blue-pressed: var(--blue-pressed);
+  --color-brand-coral: var(--brand-coral);
+  --color-coral-light: var(--coral-light);
+  --color-coral-dark: var(--coral-dark);
+  --color-rose-light: var(--rose-light);
+  --color-brand-teal: var(--brand-teal);
+  --color-teal-light: var(--teal-light);
+  --color-moss-dark: var(--moss-dark);
+  --color-orange-light: var(--brand-orange-light);
+  --color-brand-red: var(--brand-red);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-yellow: var(--surface-yellow);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-ink: var(--ink);
+  --color-charcoal: var(--charcoal);
+  --color-slate: var(--slate);
+  --color-steel: var(--steel);
+  --color-stone: var(--stone);
+  --color-muted-ink: var(--muted-ink);
 }
 
 @layer base {
@@ -144,5 +215,107 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Display sizes carry negative tracking that relaxes to 0 by 28px. */
+  h1 {
+    letter-spacing: -0.5px;
+  }
+
+  /* The brand uses 400/500/600 only. Anything asking for 700 gets 600. */
+  .font-bold,
+  strong,
+  b {
+    font-weight: 600;
+  }
+}
+
+@utility micro-uppercase {
+  /* The single uppercase exception in the system: 11px section dividers. */
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/*
+ * Leaflet overrides.
+ *
+ * Leaflet ships its own chrome (rounded-12 popups, blue links, a translucent
+ * attribution strip). Left alone it reads as a third-party widget dropped into
+ * the page. These pull it onto the brand: opaque surfaces, hairline edges, the
+ * brand face, and the one documented overlay elevation.
+ */
+@layer components {
+  .leaflet-container {
+    font-family: var(--font-sans);
+  }
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 16px;
+    border: 1px solid var(--hairline);
+    box-shadow: 0 12px 32px -4px rgb(5 0 56 / 0.08);
+    background: var(--canvas);
+  }
+
+  .leaflet-popup-content {
+    margin: 12px 16px;
+    line-height: 1.5;
+  }
+
+  .leaflet-popup-tip {
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    box-shadow: none;
+  }
+
+  .leaflet-container a.leaflet-popup-close-button {
+    color: var(--steel);
+    transition: color 150ms cubic-bezier(0.2, 0, 0.2, 1);
+  }
+
+  .leaflet-container a.leaflet-popup-close-button:hover {
+    color: var(--ink);
+  }
+
+  /* Zoom control: opaque white, hairline edges, brand pill-adjacent corners. */
+  .leaflet-bar {
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px 0 rgb(5 0 56 / 0.04);
+    overflow: hidden;
+  }
+
+  .leaflet-bar a,
+  .leaflet-bar a:hover {
+    background: var(--canvas);
+    color: var(--ink);
+    border-bottom-color: var(--hairline-soft);
+    transition: background-color 150ms cubic-bezier(0.2, 0, 0.2, 1);
+  }
+
+  .leaflet-bar a:hover {
+    background: var(--hairline-soft);
+  }
+
+  .leaflet-container .leaflet-control-attribution {
+    background: color-mix(in oklab, var(--canvas) 92%, transparent);
+    color: var(--stone);
+    font-size: 11px;
+    border-top-left-radius: 8px;
+  }
+
+  .leaflet-container .leaflet-control-attribution a {
+    color: var(--steel);
+  }
+
+  /* Markers are divIcons; strip Leaflet's default box so only the pin shows. */
+  .vrp-marker {
+    background: transparent;
+    border: 0;
   }
 }

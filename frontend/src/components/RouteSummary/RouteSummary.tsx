@@ -1,6 +1,7 @@
 import type { DeliveryPoint, OptimizeResponse } from "@/types";
 import { formatDistance, formatDuration } from "@/utils/format";
 import { routeColor } from "@/utils/colors";
+import { cardInteractive, cardSelected } from "@/lib/brand";
 import { Clock, Package, Route as RouteIcon, Truck } from "lucide-react";
 
 interface Props {
@@ -12,22 +13,41 @@ interface Props {
   onSelectRoute: (id: string | null) => void;
 }
 
-function Stat({
+/*
+ * Stat tiles take the pastel feature-card treatment: 28px radius, saturated
+ * fill, never a shadow ("their saturation is their weight"). They pair with
+ * the white route cards below them, as the brand requires.
+ *
+ * Adaptation, flagged: the brand's StatCard renders values at 64px display
+ * size. That is a marketing figure and unusable in a 380px tool sidebar, so
+ * these run at the h4 step (22px) and keep the -0.5px tracking off.
+ */
+const TILE_TONES = [
+  "bg-yellow-light text-yellow-dark",
+  "bg-teal-light text-moss-dark",
+  "bg-coral-light text-coral-dark",
+  "bg-rose-light text-ink",
+  "bg-orange-light text-ink",
+] as const;
+
+function StatTile({
   icon,
   label,
   value,
+  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  tone: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className={`rounded-3xl p-4 ${tone}`}>
+      <div className="flex items-center gap-1.5 text-[13px] font-medium opacity-80">
         {icon}
         {label}
       </div>
-      <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
+      <p className="mt-1 text-[22px] font-semibold leading-tight">{value}</p>
     </div>
   );
 }
@@ -44,44 +64,56 @@ export function RouteSummary({
   const deliveries = new Set(
     result.routes.flatMap((r) => r.stops.map((s) => s.pointId)),
   ).size;
-  const totalLoad = result.routes.reduce(
-    (sum, route) => Math.max(sum, route.loadUnits),
+  const peakLoad = result.routes.reduce(
+    (max, route) => Math.max(max, route.loadUnits),
     0,
   );
   const fleetCapacity = vehicleCapacities.reduce((sum, cap) => sum + cap, 0);
 
+  const tiles = [
+    {
+      icon: <RouteIcon className="h-[18px] w-[18px]" />,
+      label: "Total distance",
+      value: formatDistance(result.summary.totalDistanceMeters),
+    },
+    {
+      icon: <Clock className="h-[18px] w-[18px]" />,
+      label: "Total duration",
+      value: formatDuration(result.summary.totalDurationSeconds),
+    },
+    {
+      icon: <Truck className="h-[18px] w-[18px]" />,
+      label: "Vehicles used",
+      value: String(result.summary.usedVehicles),
+    },
+    {
+      icon: <Package className="h-[18px] w-[18px]" />,
+      label: "Visited stops",
+      value: String(deliveries),
+    },
+    ...(showCapacity
+      ? [
+          {
+            icon: <Package className="h-[18px] w-[18px]" />,
+            label: "Peak load",
+            value: `${peakLoad} / ${fleetCapacity}`,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="space-y-3">
-      <div
-        className={`grid grid-cols-2 gap-2 ${showCapacity ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
-      >
-        <Stat
-          icon={<RouteIcon className="h-3.5 w-3.5" />}
-          label="Total distance"
-          value={formatDistance(result.summary.totalDistanceMeters)}
-        />
-        <Stat
-          icon={<Clock className="h-3.5 w-3.5" />}
-          label="Total duration"
-          value={formatDuration(result.summary.totalDurationSeconds)}
-        />
-        <Stat
-          icon={<Truck className="h-3.5 w-3.5" />}
-          label="Vehicles used"
-          value={String(result.summary.usedVehicles)}
-        />
-        <Stat
-          icon={<Package className="h-3.5 w-3.5" />}
-          label="Visited stops"
-          value={String(deliveries)}
-        />
-        {showCapacity && (
-          <Stat
-            icon={<Package className="h-3.5 w-3.5" />}
-            label="Peak load"
-            value={`${totalLoad} / ${fleetCapacity}`}
+      <div className="grid grid-cols-2 gap-2">
+        {tiles.map((tile, idx) => (
+          <StatTile
+            key={tile.label}
+            icon={tile.icon}
+            label={tile.label}
+            value={tile.value}
+            tone={TILE_TONES[idx % TILE_TONES.length]}
           />
-        )}
+        ))}
       </div>
 
       <ul className="space-y-2">
@@ -94,47 +126,52 @@ export function RouteSummary({
               <button
                 type="button"
                 onClick={() => onSelectRoute(selected ? null : route.vehicleId)}
-                className={`w-full rounded-lg border p-3 text-left transition-colors ${
-                  selected
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-card hover:border-primary/40"
-                }`}
+                aria-pressed={selected}
+                className={[
+                  "w-full p-3 text-left",
+                  // A 2px blue edge marks the selected route — the same
+                  // treatment the brand gives its one featured pricing card.
+                  selected ? cardSelected : cardInteractive,
+                  "outline-none focus-visible:border-brand-blue",
+                ].join(" ")}
               >
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-ink">
                     <span
-                      className="h-3 w-3 rounded-full"
+                      className="h-3 w-3 shrink-0 rounded-full"
                       style={{ backgroundColor: color }}
                     />
-                    {route.vehicleId}
+                    Vehicle {route.vehicleId}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="shrink-0 text-[13px] text-steel">
                     {formatDistance(route.distanceMeters)} ·{" "}
                     {formatDuration(route.durationSeconds)}
                   </span>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                  {route.stops.map((s, i) => (
-                    <span key={s.sequence} className="flex items-center gap-1">
-                      <span className="truncate rounded bg-secondary px-1.5 py-0.5 text-secondary-foreground">
-                        {pointById.get(s.pointId)?.address.split(",")[0] ??
-                          s.pointId}
-                        {(pointById.get(s.pointId)?.serviceDurationMinutes ??
-                          0) > 0 && (
-                          <>
-                            {" "}
-                            ({pointById.get(s.pointId)?.serviceDurationMinutes})
-                          </>
+                <div className="mt-2 flex flex-wrap items-center gap-1 text-[13px] text-steel">
+                  {route.stops.map((s, i) => {
+                    const point = pointById.get(s.pointId);
+                    const service = point?.serviceDurationMinutes ?? 0;
+                    return (
+                      <span
+                        key={s.sequence}
+                        className="flex items-center gap-1"
+                      >
+                        <span className="truncate rounded-full bg-surface px-2 py-0.5 text-slate">
+                          {point?.address.split(",")[0] ?? s.pointId}
+                          {service > 0 && <> ({service})</>}
+                        </span>
+                        {i < route.stops.length - 1 && (
+                          <span className="text-stone">→</span>
                         )}
                       </span>
-                      {i < route.stops.length - 1 && <span>→</span>}
-                    </span>
-                  ))}
+                    );
+                  })}
                 </div>
                 {showCapacity && (
-                  <div className="mt-2 text-xs text-muted-foreground">
+                  <p className="mt-2 text-[13px] text-steel">
                     Peak load: {route.loadUnits} / {capacity}
-                  </div>
+                  </p>
                 )}
               </button>
             </li>

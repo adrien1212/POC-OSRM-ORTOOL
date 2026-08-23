@@ -59,23 +59,35 @@ function MapControls({ points }: { points: DeliveryPoint[] }) {
   };
   const reset = () => map.setView(PARIS, 12);
 
+  /* Floating utility controls: circular IconButtons on an opaque white
+     surface, taking the overlay elevation the brand reserves for panels that
+     sit above content. */
+  const control = [
+    "flex h-10 w-10 items-center justify-center rounded-full border border-hairline bg-canvas text-ink",
+    "shadow-overlay transition-colors duration-150 ease-brand",
+    "hover:bg-hairline-soft active:bg-hairline",
+    "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
+  ].join(" ");
+
   return (
     <div className="absolute right-3 top-3 z-[1000] flex flex-col gap-2">
       <button
         type="button"
         onClick={fitAll}
         title="Fit all markers"
-        className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-md transition-colors hover:bg-accent"
+        aria-label="Fit all markers"
+        className={control}
       >
-        <Maximize className="h-4 w-4" />
+        <Maximize className="h-[18px] w-[18px]" />
       </button>
       <button
         type="button"
         onClick={reset}
         title="Reset view"
-        className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-md transition-colors hover:bg-accent"
+        aria-label="Reset view"
+        className={control}
       >
-        <Crosshair className="h-4 w-4" />
+        <Crosshair className="h-[18px] w-[18px]" />
       </button>
     </div>
   );
@@ -251,9 +263,11 @@ export default function MapView({
                 icon={stopIcon(color, stop.sequence)}
               >
                 <Popup>
-                  <strong>{route.vehicleId}</strong> · stop #{stop.sequence}
+                  <span className="text-[13px] font-semibold text-ink">
+                    Vehicle {route.vehicleId} · stop {stop.sequence}
+                  </span>
                   <br />
-                  {p.address}
+                  <span className="text-[13px] text-steel">{p.address}</span>
                 </Popup>
               </Marker>
             );
@@ -269,9 +283,13 @@ export default function MapView({
             icon={iconFor(p, index)}
           >
             <Popup>
-              <strong>{p.address}</strong>
+              <span className="text-[13px] font-semibold text-ink">
+                {p.address}
+              </span>
               <br />
-              {formatCoords(p.latitude, p.longitude)}
+              <span className="text-[13px] text-steel">
+                {formatCoords(p.latitude, p.longitude)}
+              </span>
             </Popup>
           </Marker>
         ))}
